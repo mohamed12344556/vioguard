@@ -43,12 +43,12 @@ class CustomButton extends StatelessWidget {
               onPressed: isLoading ? null : onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: color ?? AppColors.primary,
-                foregroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(borderRadius),
                 ),
                 elevation: 4,
-                shadowColor: (color ?? AppColors.primary).withOpacity(0.4),
+                shadowColor: (color ?? AppColors.primary).withValues(alpha: 0.4),
               ),
               child: _buildChild(),
             ),
@@ -61,7 +61,7 @@ class CustomButton extends StatelessWidget {
         width: 24,
         height: 24,
         child: CircularProgressIndicator(
-          color: AppColors.primary,
+          color: AppColors.textOnPrimary,
           strokeWidth: 2.5,
         ),
       );
@@ -70,8 +70,8 @@ class CustomButton extends StatelessWidget {
       text,
       style: TextStyle(
         fontSize: 18,
-        fontWeight: FontWeight.w900,
-        color: AppColors.primary,
+        fontWeight: FontWeight.w700,
+        color: isOutlined ? AppColors.primary : AppColors.textOnPrimary,
       ),
     );
   }

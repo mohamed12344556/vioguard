@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'routes.dart';
-import '../../features/splash/splash_screen.dart';
-import '../../features/onboarding/onboarding_screen.dart';
-import '../../features/home/views/home_screen.dart';
+import '../../features/home/views/dashboard_screen.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/signup_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/reset_password_page.dart';
+import '../../features/detection/views/text_detection_screen.dart';
+import '../../features/detection/views/text_detection_result_screen.dart';
+import '../../features/detection/views/video_detection_screen.dart';
+import '../../features/detection/views/video_detection_result_screen.dart';
+import '../../features/history/views/detection_details_screen.dart';
+import '../../features/history/models/detection_history_item.dart';
+import '../../features/profile/views/edit_profile_screen.dart';
 
 /// Application Router
 class AppRouter {
@@ -10,12 +19,50 @@ class AppRouter {
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case Routes.splash:
-        return _buildRoute(const SplashScreen(), settings);
-      case Routes.onboarding:
-        return _buildRoute(const OnboardingScreen(), settings);
+      case Routes.login:
+        return _buildRoute(const LoginPage(), settings);
+      case Routes.register:
+        return _buildRoute(const SignUpPage(), settings);
+      case Routes.forgotPassword:
+        return _buildRoute(const ForgotPasswordPage(), settings);
+      case Routes.resetPassword:
+        return _buildRoute(const ResetPasswordPage(), settings);
       case Routes.home:
-        return _buildRoute(const HomeScreen(), settings);
+      case Routes.dashboard:
+        return _buildRoute(const DashboardScreen(), settings);
+      case Routes.textDetection:
+        return _buildRoute(const TextDetectionScreen(), settings);
+      case Routes.textDetectionResult:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          TextDetectionResultScreen(
+            analyzedText: args?['text'] ?? '',
+            isViolent: args?['isViolent'] ?? false,
+            highlightedWords: args?['highlightedWords'] as List<String>?,
+          ),
+          settings,
+        );
+      case Routes.videoDetection:
+        return _buildRoute(const VideoDetectionScreen(), settings);
+      case Routes.videoDetectionResult:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          VideoDetectionResultScreen(
+            videoPath: args?['videoPath'],
+            isViolent: args?['isViolent'] ?? false,
+            confidenceScore: args?['confidenceScore'] ?? 0,
+            thumbnailPath: args?['thumbnailPath'],
+          ),
+          settings,
+        );
+      case Routes.detectionDetails:
+        final item = settings.arguments as DetectionHistoryItem;
+        return _buildRoute(
+          DetectionDetailsScreen(item: item),
+          settings,
+        );
+      case Routes.editProfile:
+        return _buildRoute(const EditProfileScreen(), settings);
       default:
         return _buildRoute(
           Scaffold(

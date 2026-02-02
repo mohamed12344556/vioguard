@@ -28,37 +28,33 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  animate_do: ^4.2.0
+  bloc: ^9.2.0
+  cached_network_image: ^3.4.1
+  connectivity_plus: ^6.1.5
+  cupertino_icons: ^1.0.8
+  dartz: ^0.10.1
+  dio: ^5.9.1
+  easy_localization: ^3.0.8
+  equatable: ^2.0.8
   flutter:
     sdk: flutter
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-  dio: ^5.9.1
-  dartz: ^0.10.1
-  equatable: ^2.0.8
-  internet_connection_checker: ^3.0.1
-  google_fonts: ^8.0.0
-  shared_preferences: ^2.5.4
-  cached_network_image: ^3.4.1
-  pretty_dio_logger: ^1.4.0
+  flutter_bloc: ^9.1.1
+  flutter_native_splash: ^2.4.7
+  flutter_screenutil: ^5.9.3
   flutter_svg: ^2.2.3
+  get_it: ^9.2.0
+  google_fonts: ^8.0.0
+  internet_connection_checker: ^3.0.1
+  intl: ^0.20.2
+  lottie: ^3.3.2
+  path_provider: ^2.1.5
+  pretty_dio_logger: ^1.4.0
+  shared_preferences: ^2.5.4
   shimmer: ^3.0.0
   url_launcher: ^6.3.2
-  path_provider: ^2.1.5
-  connectivity_plus: ^6.1.5
-  easy_localization: ^3.0.8
-  animate_do: ^4.2.0
-  lottie: ^3.3.2
-  intl: ^0.20.2
-  flutter_screenutil: ^5.9.3
-  flutter_bloc: ^9.1.1
-  bloc: ^9.2.0
-  get_it: ^9.2.0
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -66,25 +62,23 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
 # The following section is specific to Flutter packages.
-
 flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/app_logo.png
     - assets/images/
     - assets/lang/
     - assets/fonts/
     - assets/icons/
-
-  fonts:
-    - family: CustomFont
-      fonts:
-        - asset: assets/fonts/CustomFont-Regular.ttf
-        - asset: assets/fonts/CustomFont-Bold.ttf
-          weight: 700
+  # fonts:
+  #   - family: CustomFont
+  #     fonts:
+  #       - asset: assets/fonts/CustomFont-Regular.ttf
+  #       - asset: assets/fonts/CustomFont-Bold.ttf
+  #         weight: 700

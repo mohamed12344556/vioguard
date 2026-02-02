@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../network/network_info.dart';
-import '../api/api_consumer.dart';
 import '../api/api_interceptors.dart';
 import '../config/app_config.dart';
 

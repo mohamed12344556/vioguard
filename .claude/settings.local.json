@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del \"c:\\\\Users\\\\amaz8\\\\OneDrive\\\\Documents\\\\Flutter Projects\\\\vioguard\\\\lib\\\\features\\\\auth\\\\presentation\\\\pages\\\\auth_page.dart\")"
+    ]
+  }
+}
