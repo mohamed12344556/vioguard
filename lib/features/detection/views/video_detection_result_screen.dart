@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'dart:math' as math;
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
 
@@ -48,156 +47,246 @@ class VideoDetectionResultScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Video Thumbnail with Play Button
+            // Source Video Card
             Container(
               width: double.infinity,
-              height: 200.h,
+              padding: EdgeInsets.all(14.w),
               decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.2),
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12.r),
-                image: thumbnailPath != null
-                    ? DecorationImage(
-                        image: AssetImage(thumbnailPath!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
+                border: Border.all(color: AppColors.border),
               ),
-              child: Stack(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Gradient overlay
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12.r),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.3),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Play button
-                  Center(
-                    child: Container(
-                      width: 64.w,
-                      height: 64.h,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.play_arrow,
-                        color: AppColors.textPrimary,
-                        size: 36.sp,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16.h),
-            // Result Badge
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 14.h),
-              decoration: BoxDecoration(
-                color: isViolent ? AppColors.error : AppColors.success,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    isViolent ? Icons.warning_rounded : Icons.check_circle,
-                    color: Colors.white,
-                    size: 20.sp,
-                  ),
-                  SizedBox(width: 8.w),
                   Text(
-                    isViolent ? 'Violent Content Detected' : 'Non-Violent Content',
+                    'SOURCE VIDEO',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.sp,
+                      color: AppColors.textSecondary,
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
+                      letterSpacing: 0.6,
                     ),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: 24.h),
-            // Violence Confidence (only for violent content)
-            if (isViolent) ...[
-              Text(
-                'Violence Confidence',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              // Circular Progress Indicator
-              Center(
-                child: SizedBox(
-                  width: 120.w,
-                  height: 120.h,
-                  child: CustomPaint(
-                    painter: _CircularProgressPainter(
-                      progress: confidenceScore / 100,
-                      progressColor: AppColors.error,
-                      backgroundColor: AppColors.border,
-                      strokeWidth: 8.w,
+                  SizedBox(height: 10.h),
+                  // Video row
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10.r),
                     ),
-                    child: Center(
-                      child: Text(
-                        '$confidenceScore%',
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36.w,
+                          height: 36.h,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Icon(
+                            Icons.videocam_outlined,
+                            color: AppColors.primary,
+                            size: 18.sp,
+                          ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                videoPath ?? 'https://storage.cloud.api/v/sec...',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 3.h),
+                              Text(
+                                'Uploaded 2 mins ago',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  // Open Video button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 42.h,
+                    child: OutlinedButton.icon(
+                      onPressed: () {},
+                      icon: Icon(
+                        Icons.open_in_new,
+                        size: 16.sp,
+                        color: AppColors.primary,
+                      ),
+                      label: Text(
+                        'Open Video',
                         style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 28.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Center(
-                child: Text(
-                  'Likelihood of violent activity detected in the video.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13.sp,
-                  ),
-                ),
-              ),
-              SizedBox(height: 24.h),
-            ],
-            // Content Overview
-            Text(
-              'Content Overview',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
+                ],
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 20.h),
+            // Result Card
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 28.h, horizontal: 20.w),
+              decoration: BoxDecoration(
+                color: isViolent
+                    ? AppColors.error.withValues(alpha: 0.06)
+                    : AppColors.success.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 60.w,
+                    height: 60.h,
+                    decoration: BoxDecoration(
+                      color: isViolent
+                          ? AppColors.error.withValues(alpha: 0.12)
+                          : AppColors.success.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isViolent ? Icons.warning_rounded : Icons.shield,
+                      color: isViolent ? AppColors.error : AppColors.success,
+                      size: 30.sp,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    isViolent
+                        ? 'Violent Content\nDetected'
+                        : 'Non-Violent Content\nDetected',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isViolent ? AppColors.error : AppColors.success,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20.h),
+            // Analysis Summary
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: AppColors.textSecondary,
+                  size: 18.sp,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  'ANALYSIS SUMMARY',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
             Text(
-              isViolent
-                  ? 'Scenes indicating physical aggression were identified.'
-                  : 'This video does not contain patterns associated with violent behavior. It is safe for broad distribution.',
+              'Our AI engine identified specific sequences in the uploaded media that violate safety guidelines regarding harmful behavior.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14.sp,
                 height: 1.5,
               ),
             ),
+            SizedBox(height: 16.h),
+            // Confidence Level (violent) or bullet points (non-violent)
+            if (isViolent) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Confidence Level',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    '$confidenceScore%',
+                    style: TextStyle(
+                      color: AppColors.error,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6.r),
+                child: LinearProgressIndicator(
+                  value: confidenceScore / 100,
+                  backgroundColor: AppColors.border,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppColors.error),
+                  minHeight: 10.h,
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.textLight,
+                    size: 14.sp,
+                  ),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      'Statistical confidence based on current algorithmic model analysis of frame-by-frame metadata.',
+                      style: TextStyle(
+                        color: AppColors.textLight,
+                        fontSize: 12.sp,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              _buildNonViolentBullets(),
+            ],
             SizedBox(height: 32.h),
-            // Analyze Another Video Button
+            // Analyze Another Button
             SizedBox(
               width: double.infinity,
               height: 52.h,
@@ -209,12 +298,12 @@ class VideoDetectionResultScreen extends StatelessWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(30.r),
                   ),
                   elevation: 0,
                 ),
                 child: Text(
-                  'Analyze Another Video',
+                  'Analyze Another Content',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
@@ -228,56 +317,37 @@ class VideoDetectionResultScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class _CircularProgressPainter extends CustomPainter {
-  final double progress;
-  final Color progressColor;
-  final Color backgroundColor;
-  final double strokeWidth;
+  Widget _buildNonViolentBullets() {
+    final bullets = [
+      'Normal activity detected',
+      'No threat indicators found',
+      'Standard behavioral patterns',
+    ];
 
-  _CircularProgressPainter({
-    required this.progress,
-    required this.progressColor,
-    required this.backgroundColor,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - strokeWidth) / 2;
-
-    // Background circle
-    final backgroundPaint = Paint()
-      ..color = backgroundColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, backgroundPaint);
-
-    // Progress arc
-    final progressPaint = Paint()
-      ..color = progressColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    final sweepAngle = 2 * math.pi * progress;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      sweepAngle,
-      false,
-      progressPaint,
+    return Column(
+      children: bullets.map((b) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 12.h),
+          child: Row(
+            children: [
+              Icon(
+                Icons.check_circle_outline,
+                color: AppColors.success,
+                size: 18.sp,
+              ),
+              SizedBox(width: 10.w),
+              Text(
+                b,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14.sp,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
-  }
-
-  @override
-  bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.progressColor != progressColor ||
-        oldDelegate.backgroundColor != backgroundColor;
   }
 }

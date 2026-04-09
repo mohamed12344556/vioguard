@@ -11,33 +11,44 @@ class VideoDetectionScreen extends StatefulWidget {
 }
 
 class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
-  String? _selectedVideoPath;
+  final TextEditingController _urlController = TextEditingController();
   bool _isLoading = false;
 
-  void _uploadVideo() {
-    // Simulate video selection
-    setState(() {
-      _selectedVideoPath = 'video_sample.mp4';
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill URL if passed as argument
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map && args['url'] != null) {
+        _urlController.text = args['url'] as String;
+        setState(() {});
+      }
     });
   }
 
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
+  }
+
   void _detectViolence() {
-    if (_selectedVideoPath == null) return;
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return;
 
     setState(() => _isLoading = true);
 
-    // Simulate API call
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      // Navigate to result screen
       Navigator.pushNamed(
         context,
         Routes.videoDetectionResult,
         arguments: {
-          'videoPath': _selectedVideoPath,
-          'isViolent': true, // Demo: show violent result
+          'videoPath': url,
+          'isViolent': true,
           'confidenceScore': 82,
         },
       );
@@ -46,6 +57,8 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasUrl = _urlController.text.trim().isNotEmpty;
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -61,7 +74,7 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'Video Detection',
+          'Analyze Content',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18.sp,
@@ -74,78 +87,71 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Upload Card
+            Text(
+              'Paste a link to analyze text or video content for potential violence or harmful themes.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14.sp,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            // URL Input
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(24.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: AppColors.border),
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  // Video Icon
                   Icon(
-                    Icons.video_library_outlined,
-                    color: AppColors.primary,
-                    size: 64.sp,
+                    Icons.link,
+                    color: AppColors.textSecondary,
+                    size: 20.sp,
                   ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    _selectedVideoPath != null
-                        ? 'Video Selected'
-                        : 'Upload a video to analyze for violent content',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                  if (_selectedVideoPath != null) ...[
-                    SizedBox(height: 8.h),
-                    Text(
-                      _selectedVideoPath!,
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                  SizedBox(height: 24.h),
-                  // Upload Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48.h,
-                    child: OutlinedButton.icon(
-                      onPressed: _uploadVideo,
-                      icon: Icon(
-                        Icons.upload_outlined,
-                        size: 20.sp,
-                      ),
-                      label: Text(
-                        'Upload Video',
-                        style: TextStyle(
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: TextField(
+                      controller: _urlController,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: 'Paste URL here...',
+                        hintStyle: TextStyle(
+                          color: AppColors.textLight,
                           fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
                         ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
                       ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14.sp,
                       ),
                     ),
                   ),
+                  if (hasUrl)
+                    GestureDetector(
+                      onTap: () {
+                        _urlController.clear();
+                        setState(() {});
+                      },
+                      child: Icon(
+                        Icons.close,
+                        color: AppColors.textSecondary,
+                        size: 18.sp,
+                      ),
+                    ),
                 ],
               ),
             ),
-            SizedBox(height: 16.h),
-            // Supported Formats Info
+            SizedBox(height: 12.h),
+            // Info Note
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.info_outline,
@@ -153,38 +159,40 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
                   size: 16.sp,
                 ),
                 SizedBox(width: 8.w),
-                Text(
-                  'Supported formats: MP4',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13.sp,
+                Expanded(
+                  child: Text(
+                    'Our AI will automatically detect whether the content is text or video and scan for safety violations.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12.sp,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
             ),
-            const Spacer(),
+            SizedBox(height: 16.h),
             // Detect Button
             SizedBox(
               width: double.infinity,
               height: 52.h,
               child: ElevatedButton(
-                onPressed: _selectedVideoPath == null || _isLoading
-                    ? null
-                    : _detectViolence,
+                onPressed: hasUrl && !_isLoading ? _detectViolence : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+                  disabledBackgroundColor:
+                      AppColors.primary.withValues(alpha: 0.4),
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
-                  disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
+                  disabledForegroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(30.r),
                   ),
                   elevation: 0,
                 ),
                 child: _isLoading
                     ? SizedBox(
-                        width: 24.w,
-                        height: 24.h,
+                        width: 22.w,
+                        height: 22.h,
                         child: const CircularProgressIndicator(
                           color: Colors.white,
                           strokeWidth: 2.5,
@@ -197,6 +205,36 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+              ),
+            ),
+            const Spacer(),
+            // Privacy Note
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.shield_outlined,
+                    color: AppColors.textLight,
+                    size: 32.sp,
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Your analysis history is encrypted and only\nvisible to you.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13.sp,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 16.h),

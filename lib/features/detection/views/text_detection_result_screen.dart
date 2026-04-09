@@ -39,104 +39,140 @@ class TextDetectionResultScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: Icon(
+              Icons.more_vert,
+              color: AppColors.textPrimary,
+              size: 22.sp,
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Result Badge
-            Center(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: isViolent ? AppColors.error : AppColors.success,
-                  borderRadius: BorderRadius.circular(30.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isViolent ? Icons.warning_rounded : Icons.check_circle,
-                      color: Colors.white,
-                      size: 20.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      isViolent ? 'Violent Content' : 'Non-Violent Content',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
+            // Analyzed Text Card
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.format_quote,
+                        color: AppColors.primary,
+                        size: 18.sp,
                       ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        'ANALYZED TEXT',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                  _buildHighlightedText(),
+                ],
+              ),
+            ),
+            SizedBox(height: 20.h),
+            // Result Card
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 28.h, horizontal: 20.w),
+              decoration: BoxDecoration(
+                color: isViolent
+                    ? AppColors.error.withValues(alpha: 0.06)
+                    : AppColors.success.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Column(
+                children: [
+                  // Icon in circle
+                  Container(
+                    width: 60.w,
+                    height: 60.h,
+                    decoration: BoxDecoration(
+                      color: isViolent
+                          ? AppColors.error.withValues(alpha: 0.12)
+                          : AppColors.success.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
                     ),
-                  ],
-                ),
+                    child: Icon(
+                      isViolent ? Icons.warning_rounded : Icons.shield,
+                      color: isViolent ? AppColors.error : AppColors.success,
+                      size: 30.sp,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    isViolent
+                        ? 'Violent Content\nDetected'
+                        : _getNeutralLabel(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isViolent ? AppColors.error : AppColors.success,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 16.h),
-            // Description
-            Center(
-              child: Text(
-                isViolent
-                    ? 'The provided text contains potentially harmful language.'
-                    : 'The provided text does not contain patterns associated with violent or harmful language.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
+            SizedBox(height: 20.h),
+            // Analysis Summary
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
                   color: AppColors.textSecondary,
-                  fontSize: 14.sp,
+                  size: 18.sp,
                 ),
-              ),
-            ),
-            SizedBox(height: 24.h),
-            // Divider
-            Container(
-              height: 1,
-              color: AppColors.border,
-            ),
-            SizedBox(height: 24.h),
-            // Analyzed Text Section
-            if (isViolent) ...[
-              Text(
-                'Analyzed Text',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
+                SizedBox(width: 6.w),
+                Text(
+                  'ANALYSIS SUMMARY',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
                 ),
-              ),
-              SizedBox(height: 12.h),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: _buildHighlightedText(),
-              ),
-              SizedBox(height: 24.h),
-            ],
-            // Divider
-            Container(
-              height: 1,
-              color: AppColors.border,
+              ],
             ),
-            SizedBox(height: 24.h),
-            // Feedback & Suggestions Section
+            SizedBox(height: 8.h),
             Text(
-              'Feedback & Suggestions',
+              isViolent
+                  ? 'Our AI detected language that implies physical threat or aggressive intent.'
+                  : 'Our AI engine has verified this content as safe, informative, and free of harmful intent.',
               style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+                fontSize: 14.sp,
+                height: 1.5,
               ),
             ),
             SizedBox(height: 16.h),
-            ..._buildSuggestions(),
+            // Bullet points
+            ..._buildBulletPoints(),
             SizedBox(height: 32.h),
-            // Analyze Another Text Button
+            // Analyze Another Button
             SizedBox(
               width: double.infinity,
               height: 52.h,
@@ -148,12 +184,12 @@ class TextDetectionResultScreen extends StatelessWidget {
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(30.r),
                   ),
                   elevation: 0,
                 ),
                 child: Text(
-                  'Analyze Another Text',
+                  'Analyze Another Content',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
@@ -168,9 +204,31 @@ class TextDetectionResultScreen extends StatelessWidget {
     );
   }
 
+  String _getNeutralLabel() {
+    // Check if text is clearly positive/community (Against Violent)
+    final positiveKeywords = ['renovation', 'community', 'safety', 'residents', 'improve'];
+    final lowerText = analyzedText.toLowerCase();
+    final isPositive = positiveKeywords.any((k) => lowerText.contains(k));
+    if (isPositive) return 'Against Violent Content\nDetected';
+    return 'Neutral Content\nDetected';
+  }
+
   Widget _buildHighlightedText() {
-    if (highlightedWords == null || highlightedWords!.isEmpty) {
-      return _buildDefaultHighlightedText();
+    final effectiveHighlightedWords = highlightedWords ??
+        (isViolent
+            ? ['kill', 'crush', 'destroy', 'threat', 'attack', 'hurt', 'enemies', 'revenge', 'regret', 'pay', 'watch your back', 'don\'t last long']
+            : []);
+
+    if (effectiveHighlightedWords.isEmpty) {
+      return Text(
+        '"$analyzedText"',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 14.sp,
+          height: 1.6,
+          fontStyle: FontStyle.italic,
+        ),
+      );
     }
 
     final words = analyzedText.split(' ');
@@ -180,99 +238,128 @@ class TextDetectionResultScreen extends StatelessWidget {
           color: AppColors.textPrimary,
           fontSize: 14.sp,
           height: 1.6,
+          fontStyle: FontStyle.italic,
         ),
-        children: words.map((word) {
-          final isHighlighted = highlightedWords!.any(
-            (hw) => word.toLowerCase().contains(hw.toLowerCase()),
-          );
-          return TextSpan(
-            text: '$word ',
-            style: TextStyle(
-              backgroundColor:
-                  isHighlighted ? AppColors.error.withValues(alpha: 0.2) : null,
-              color: isHighlighted ? AppColors.error : AppColors.textPrimary,
-              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
-            ),
-          );
-        }).toList(),
+        children: [
+          const TextSpan(text: '"'),
+          ...words.map((word) {
+            final cleanWord = word.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
+            final isHighlighted = effectiveHighlightedWords
+                .any((hw) => cleanWord.contains(hw.toLowerCase()));
+            return TextSpan(
+              text: '$word ',
+              style: isHighlighted
+                  ? TextStyle(
+                      backgroundColor: AppColors.error.withValues(alpha: 0.15),
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w600,
+                      fontStyle: FontStyle.italic,
+                    )
+                  : null,
+            );
+          }),
+          const TextSpan(text: '"'),
+        ],
       ),
     );
   }
 
-  Widget _buildDefaultHighlightedText() {
-    // Default highlighted words for violent content demo
-    final violentKeywords = [
-      'crush',
-      'enemies',
-      'pay',
-      'regret',
-      'crossing',
-      'threat',
-      'kill',
-      'destroy',
-      'attack',
-      'hurt',
-    ];
+  List<Widget> _buildBulletPoints() {
+    final List<Map<String, dynamic>> points;
 
-    final words = analyzedText.split(' ');
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14.sp,
-          height: 1.6,
-        ),
-        children: words.map((word) {
-          final cleanWord =
-              word.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
-          final isHighlighted = violentKeywords.contains(cleanWord);
-          return TextSpan(
-            text: '$word ',
-            style: TextStyle(
-              backgroundColor:
-                  isHighlighted ? AppColors.error.withValues(alpha: 0.2) : null,
-              color: isHighlighted ? AppColors.error : AppColors.textPrimary,
-              fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.normal,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+    if (isViolent) {
+      points = [
+        {
+          'title': 'Aggressive Tone Detected',
+          'subtitle': 'The text contains direct threats and assertive hostile language.',
+          'isViolent': true,
+        },
+        {
+          'title': 'Contextual Reasoning',
+          'subtitle': 'Inference suggests a sequence of future harmful actions.',
+          'isViolent': true,
+        },
+      ];
+    } else {
+      final lowerText = analyzedText.toLowerCase();
+      final isPositive = ['renovation', 'community', 'safety', 'residents']
+          .any((k) => lowerText.contains(k));
 
-  List<Widget> _buildSuggestions() {
-    final suggestions = isViolent
-        ? [
-            'Review the highlighted sections for specific keywords and phrases.',
-            'Consider rephrasing aggressive statements to maintain a constructive tone.',
-            'Ensure content adheres to community guidelines for respectful communication.',
-          ]
-        : [
-            'No violent language detected. Content is safe for broad distribution.',
-            'Consider maintaining a respectful tone for wider appeal.',
-            'Ensure clarity in your message to prevent misinterpretation.',
-          ];
+      if (isPositive) {
+        points = [
+          {
+            'title': 'Absence of Threats',
+            'subtitle': 'No aggressive verbs or threatening sentence structures were detected in the input.',
+            'isViolent': false,
+          },
+          {
+            'title': 'Positive Intent',
+            'subtitle': 'Contextual analysis identifies constructive and community-oriented keywords.',
+            'isViolent': false,
+          },
+        ];
+      } else {
+        points = [
+          {
+            'title': 'No aggressive tone detected',
+            'subtitle': null,
+            'isViolent': false,
+          },
+          {
+            'title': 'Informational or neutral language',
+            'subtitle': null,
+            'isViolent': false,
+          },
+          {
+            'title': 'No harmful intent identified',
+            'subtitle': null,
+            'isViolent': false,
+          },
+        ];
+      }
+    }
 
-    return suggestions.map((suggestion) {
+    return points.map((p) {
+      final bool violent = p['isViolent'] as bool;
+      final String? subtitle = p['subtitle'] as String?;
       return Padding(
-        padding: EdgeInsets.only(bottom: 12.h),
+        padding: EdgeInsets.only(bottom: 14.h),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.info_outline,
-              color: AppColors.primary,
-              size: 18.sp,
+            Container(
+              margin: EdgeInsets.only(top: 2.h),
+              child: Icon(
+                violent ? Icons.warning_amber_rounded : Icons.check_circle_outline,
+                color: violent ? AppColors.error : AppColors.primary,
+                size: 18.sp,
+              ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: 10.w),
             Expanded(
-              child: Text(
-                suggestion,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14.sp,
-                  height: 1.4,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p['title'] as String,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    SizedBox(height: 3.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13.sp,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

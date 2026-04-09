@@ -15,20 +15,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int _selectedTabIndex = 0;
   final List<String> _tabs = ['All', 'Text', 'Video'];
 
-  // Sample data
   final List<DetectionHistoryItem> _historyItems = [
     DetectionHistoryItem(
       id: '1',
-      type: DetectionType.text,
+      type: DetectionType.video,
       result: DetectionResult.nonViolent,
-      dateTime: DateTime(2024, 7, 26, 16, 20),
-      content: 'This is a sample text that contains no aggressive or harmful intent. It promotes clear, respectful communication.',
+      dateTime: DateTime.now().subtract(const Duration(hours: 2)),
+      sourceUrl: 'youtube.com/watch?v=dQv...',
+      confidenceScore: null,
     ),
     DetectionHistoryItem(
       id: '2',
+      type: DetectionType.text,
+      result: DetectionResult.nonViolent,
+      dateTime: DateTime.now().subtract(const Duration(hours: 5)),
+      sourceUrl: 'reddit.com/r/technology/cc...',
+    ),
+    DetectionHistoryItem(
+      id: '3',
       type: DetectionType.video,
       result: DetectionResult.violent,
-      dateTime: DateTime(2024, 6, 12, 10, 0),
+      dateTime: DateTime.now().subtract(const Duration(days: 1)),
+      sourceUrl: 'vimeo.com/channels/staff/...',
       confidenceScore: 82,
       flagReasons: [
         'Identified high-impact physical actions in the video.',
@@ -37,36 +45,49 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ],
     ),
     DetectionHistoryItem(
-      id: '3',
-      type: DetectionType.text,
-      result: DetectionResult.violent,
-      dateTime: DateTime(2024, 5, 10, 20, 15),
-      content: 'I will absolutely destroy them. They won\'t know what hit them. This is a crucial fight, and I plan to brutally win.',
-      flagReasons: [
-        'Threatening intent: Phrases like "destroy them" and "won\'t know what hit them" imply direct harm.',
-        'Violent keywords: "Brutally" directly indicates violent action or manner.',
-        'Context suggesting harm: The overall tone of a "fight" combined with aggressive language suggests intent for harm.',
-      ],
-    ),
-    DetectionHistoryItem(
       id: '4',
       type: DetectionType.video,
-      result: DetectionResult.violent,
-      dateTime: DateTime(2024, 4, 28, 11, 30),
-      confidenceScore: 75,
+      result: DetectionResult.nonViolent,
+      dateTime: DateTime(2025, 5, 10),
+      sourceUrl: 'youtube.com/watch?v=dQv...',
     ),
     DetectionHistoryItem(
       id: '5',
       type: DetectionType.text,
       result: DetectionResult.nonViolent,
-      dateTime: DateTime(2024, 4, 19, 14, 0),
-      content: 'Looking forward to our meeting tomorrow. Let\'s discuss the project updates.',
+      dateTime: DateTime(2024, 4, 28),
+      sourceUrl: 'reddit.com/r/technology/cc...',
     ),
     DetectionHistoryItem(
       id: '6',
       type: DetectionType.video,
-      result: DetectionResult.nonViolent,
-      dateTime: DateTime(2024, 4, 10, 7, 45),
+      result: DetectionResult.violent,
+      dateTime: DateTime(2024, 4, 19),
+      sourceUrl: 'vimeo.com/channels/staff/...',
+      confidenceScore: 75,
+      flagReasons: [
+        'Identified high-impact physical actions in the video.',
+        'Detected rapid and forceful movements consistent with aggression.',
+      ],
+    ),
+    DetectionHistoryItem(
+      id: '7',
+      type: DetectionType.video,
+      result: DetectionResult.violent,
+      dateTime: DateTime(2024, 4, 10),
+      sourceUrl: 'vimeo.com/channels/staff/...',
+      confidenceScore: 91,
+      flagReasons: [
+        'Presence of aggressive postures and gestures between individuals.',
+      ],
+    ),
+    DetectionHistoryItem(
+      id: '8',
+      type: DetectionType.video,
+      result: DetectionResult.violent,
+      dateTime: DateTime(2024, 4, 9),
+      sourceUrl: 'vimeo.com/channels/staff/...',
+      confidenceScore: 68,
     ),
   ];
 
@@ -76,6 +97,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
       return _historyItems.where((item) => item.isText).toList();
     }
     return _historyItems.where((item) => item.isVideo).toList();
+  }
+
+  String _formatItemDate(DetectionHistoryItem item) {
+    final now = DateTime.now();
+    final diff = now.difference(item.dateTime);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mins ago';
+    if (diff.inHours < 24) return '${diff.inHours} hours ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    // Otherwise show date
+    return '${item.dateTime.day}/${item.dateTime.month}/${item.dateTime.year}';
   }
 
   @override
@@ -111,14 +142,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: 10.h),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : Colors.transparent,
+                        color: isSelected
+                            ? AppColors.primary
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(25.r),
                       ),
                       child: Text(
                         _tabs[index],
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.textSecondary,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textSecondary,
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -130,17 +165,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
         ),
-        SizedBox(height: 20.h),
-        // History List
+        SizedBox(height: 16.h),
+        // List
         Expanded(
           child: ListView.separated(
             padding: EdgeInsets.symmetric(horizontal: 20.w),
             itemCount: _filteredItems.length,
-            separatorBuilder: (context, index) => SizedBox(height: 12.h),
+            separatorBuilder: (context, i) => SizedBox(height: 10.h),
             itemBuilder: (context, index) {
               final item = _filteredItems[index];
               return _HistoryItemCard(
                 item: item,
+                displayDate: _formatItemDate(item),
                 onTap: () {
                   Navigator.pushNamed(
                     context,
@@ -159,10 +195,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
 class _HistoryItemCard extends StatelessWidget {
   final DetectionHistoryItem item;
+  final String displayDate;
   final VoidCallback onTap;
 
   const _HistoryItemCard({
     required this.item,
+    required this.displayDate,
     required this.onTap,
   });
 
@@ -171,65 +209,118 @@ class _HistoryItemCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: AppColors.border),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Icon(
-                  item.isText ? Icons.description_outlined : Icons.videocam_outlined,
-                  color: AppColors.primary,
-                  size: 20.sp,
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  item.isText ? 'Text Detection' : 'Video Detection',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+            // Icon
+            Container(
+              width: 40.w,
+              height: 40.h,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(
+                item.isVideo
+                    ? Icons.play_circle_outline
+                    : Icons.description_outlined,
+                color: AppColors.primary,
+                size: 20.sp,
+              ),
             ),
-            SizedBox(height: 12.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Result Badge
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: item.isViolent ? AppColors.error : AppColors.success,
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    item.isViolent ? 'Violent' : 'Non-Violent',
+            SizedBox(width: 12.w),
+            // URL + time
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.sourceUrl ?? (item.isVideo ? 'video_sample.mp4' : 'Text content'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-                // Date Time
-                Text(
-                  '${item.formattedDate} · ${item.formattedTime}',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13.sp,
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        color: AppColors.textLight,
+                        size: 12.sp,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        displayDate,
+                        style: TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
+            ),
+            SizedBox(width: 8.w),
+            // Status badge
+            _StatusBadge(isViolent: item.isViolent),
+            SizedBox(width: 4.w),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.textLight,
+              size: 18.sp,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final bool isViolent;
+
+  const _StatusBadge({required this.isViolent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: isViolent
+            ? AppColors.error.withValues(alpha: 0.1)
+            : AppColors.success.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isViolent
+                ? Icons.warning_amber_rounded
+                : Icons.check_circle_outline,
+            color: isViolent ? AppColors.error : AppColors.success,
+            size: 12.sp,
+          ),
+          SizedBox(width: 4.w),
+          Text(
+            isViolent ? 'Flagged' : 'Safe',
+            style: TextStyle(
+              color: isViolent ? AppColors.error : AppColors.success,
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

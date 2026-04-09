@@ -12,6 +12,8 @@ import '../../features/detection/views/video_detection_result_screen.dart';
 import '../../features/history/views/detection_details_screen.dart';
 import '../../features/history/models/detection_history_item.dart';
 import '../../features/profile/views/edit_profile_screen.dart';
+import '../../features/profile/views/change_password_screen.dart';
+import '../../features/profile/views/settings_screen.dart';
 
 /// Application Router
 class AppRouter {
@@ -63,6 +65,10 @@ class AppRouter {
         );
       case Routes.editProfile:
         return _buildRoute(const EditProfileScreen(), settings);
+      case Routes.changePassword:
+        return _buildRoute(const ChangePasswordScreen(), settings);
+      case Routes.settings:
+        return _buildRoute(const SettingsScreen(), settings);
       default:
         return _buildRoute(
           Scaffold(

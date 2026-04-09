@@ -1,6 +1,6 @@
 enum DetectionType { text, video }
 
-enum DetectionResult { violent, nonViolent }
+enum DetectionResult { violent, nonViolent, againstViolent, neutral }
 
 class DetectionHistoryItem {
   final String id;
@@ -11,6 +11,7 @@ class DetectionHistoryItem {
   final String? thumbnailPath;
   final int? confidenceScore;
   final List<String>? flagReasons;
+  final String? sourceUrl;
 
   DetectionHistoryItem({
     required this.id,
@@ -21,6 +22,7 @@ class DetectionHistoryItem {
     this.thumbnailPath,
     this.confidenceScore,
     this.flagReasons,
+    this.sourceUrl,
   });
 
   bool get isViolent => result == DetectionResult.violent;
@@ -28,7 +30,11 @@ class DetectionHistoryItem {
   bool get isVideo => type == DetectionType.video;
 
   String get formattedDate {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
   }
 
   String get formattedTime {
@@ -40,4 +46,14 @@ class DetectionHistoryItem {
   }
 
   String get formattedDateTime => '$formattedDate - $formattedTime';
+
+  String get timeAgo {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inMinutes < 60) return '${diff.inMinutes} mins ago';
+    if (diff.inHours < 24) return '${diff.inHours} hours ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 30) return '${diff.inDays} days ago';
+    return formattedDate;
+  }
 }

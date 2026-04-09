@@ -26,14 +26,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _saveChanges() {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
-    // Simulate API call
     Future.delayed(const Duration(seconds: 1), () {
       if (!mounted) return;
       setState(() => _isLoading = false);
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Profile updated successfully'),
@@ -53,11 +49,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
-            size: 20.sp,
-          ),
+          icon: Icon(Icons.arrow_back_ios,
+              color: AppColors.textPrimary, size: 20.sp),
         ),
         centerTitle: true,
         title: Text(
@@ -86,8 +79,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Avatar with Edit
+                    // Avatar with edit overlay
                     Stack(
+                      clipBehavior: Clip.none,
                       children: [
                         Container(
                           width: 80.w,
@@ -106,8 +100,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           right: 0,
                           bottom: 0,
                           child: Container(
-                            width: 28.w,
-                            height: 28.h,
+                            width: 26.w,
+                            height: 26.h,
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               shape: BoxShape.circle,
@@ -116,7 +110,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             child: Icon(
                               Icons.edit,
                               color: AppColors.primary,
-                              size: 14.sp,
+                              size: 13.sp,
                             ),
                           ),
                         ),
@@ -124,64 +118,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     SizedBox(height: 8.h),
                     TextButton(
-                      onPressed: () {
-                        // TODO: Implement image picker
-                      },
+                      onPressed: () {},
+                      style: TextButton.styleFrom(
+                        minimumSize: Size.zero,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 4.h),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       child: Text(
                         'Edit Picture',
                         style: TextStyle(
                           color: AppColors.primary,
-                          fontSize: 14.sp,
+                          fontSize: 13.sp,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                     SizedBox(height: 16.h),
-                    // First Name Field
+                    // First Name
                     _EditableField(
                       label: 'First Name',
                       controller: _firstNameController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your first name';
-                        }
-                        return null;
-                      },
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Required' : null,
                     ),
-                    SizedBox(height: 16.h),
-                    // Last Name Field
+                    SizedBox(height: 14.h),
+                    // Last Name
                     _EditableField(
                       label: 'Last Name',
                       controller: _lastNameController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your last name';
-                        }
-                        return null;
-                      },
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Required' : null,
                     ),
-                    SizedBox(height: 16.h),
-                    // Email Field
-                    _EditableField(
+                    SizedBox(height: 14.h),
+                    // Email (read-only)
+                    _ReadonlyField(
                       label: 'Email',
                       controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                            .hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 24.h),
-              // Save Button
+              SizedBox(height: 20.h),
+              // Save Changes button
               SizedBox(
                 width: double.infinity,
                 height: 52.h,
@@ -189,16 +168,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onPressed: _isLoading ? null : _saveChanges,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
+                    disabledBackgroundColor:
+                        AppColors.primary.withValues(alpha: 0.4),
                     foregroundColor: Colors.white,
+                    disabledForegroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(30.r),
                     ),
                   ),
                   child: _isLoading
                       ? SizedBox(
-                          width: 24.w,
-                          height: 24.h,
+                          width: 22.w,
+                          height: 22.h,
                           child: const CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2.5,
@@ -214,7 +196,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               SizedBox(height: 12.h),
-              // Cancel Button
+              // Cancel Changes button
               SizedBox(
                 width: double.infinity,
                 height: 52.h,
@@ -222,16 +204,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: AppColors.border),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(30.r),
                     ),
                   ),
                   child: Text(
                     'Cancel Changes',
                     style: TextStyle(
                       fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -247,13 +229,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 class _EditableField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
-  final TextInputType? keyboardType;
   final String? Function(String?)? validator;
 
   const _EditableField({
     required this.label,
     required this.controller,
-    this.keyboardType,
     this.validator,
   });
 
@@ -264,43 +244,68 @@ class _EditableField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 13.sp,
-          ),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 6.h),
         TextFormField(
           controller: controller,
-          keyboardType: keyboardType,
           validator: validator,
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 15.sp,
-          ),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 15.sp),
           decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(10.r),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(10.r),
               borderSide: const BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(10.r),
               borderSide: const BorderSide(color: AppColors.primary),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(10.r),
               borderSide: const BorderSide(color: AppColors.error),
             ),
-            suffixIcon: Icon(
-              Icons.edit_outlined,
-              color: AppColors.primary,
-              size: 20.sp,
-            ),
+            suffixIcon: Icon(Icons.edit_outlined,
+                color: AppColors.primary, size: 18.sp),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReadonlyField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+
+  const _ReadonlyField({required this.label, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
+        ),
+        SizedBox(height: 6.h),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Text(
+            controller.text,
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 15.sp),
           ),
         ),
       ],
