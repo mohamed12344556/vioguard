@@ -21,12 +21,10 @@ class AppTheme {
         secondary: AppColors.secondary,
         error: AppColors.error,
         surface: AppColors.surface,
-        background: AppColors.background,
         onPrimary: AppColors.textOnPrimary,
         onSecondary: AppColors.textOnPrimary,
         onError: AppColors.textOnPrimary,
         onSurface: AppColors.textPrimary,
-        onBackground: AppColors.textPrimary,
       ),
 
       // AppBar Theme
@@ -135,12 +133,10 @@ class AppTheme {
         secondary: AppColors.secondary,
         error: AppColors.error,
         surface: AppColors.surfaceDark,
-        background: AppColors.backgroundDark,
         onPrimary: AppColors.textOnPrimary,
         onSecondary: AppColors.textOnPrimary,
         onError: AppColors.textOnPrimary,
         onSurface: AppColors.textLight,
-        onBackground: AppColors.textLight,
       ),
 
       // AppBar Theme

@@ -62,7 +62,8 @@ class TextDetectionResultScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+                border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +105,6 @@ class TextDetectionResultScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // Icon in circle
                   Container(
                     width: 60.w,
                     height: 60.h,
@@ -124,7 +124,7 @@ class TextDetectionResultScreen extends StatelessWidget {
                   Text(
                     isViolent
                         ? 'Violent Content\nDetected'
-                        : _getNeutralLabel(),
+                        : 'No Violence Detected',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isViolent ? AppColors.error : AppColors.success,
@@ -169,7 +169,6 @@ class TextDetectionResultScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            // Bullet points
             ..._buildBulletPoints(),
             SizedBox(height: 32.h),
             // Analyze Another Button
@@ -204,19 +203,23 @@ class TextDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  String _getNeutralLabel() {
-    // Check if text is clearly positive/community (Against Violent)
-    final positiveKeywords = ['renovation', 'community', 'safety', 'residents', 'improve'];
-    final lowerText = analyzedText.toLowerCase();
-    final isPositive = positiveKeywords.any((k) => lowerText.contains(k));
-    if (isPositive) return 'Against Violent Content\nDetected';
-    return 'Neutral Content\nDetected';
-  }
-
   Widget _buildHighlightedText() {
     final effectiveHighlightedWords = highlightedWords ??
         (isViolent
-            ? ['kill', 'crush', 'destroy', 'threat', 'attack', 'hurt', 'enemies', 'revenge', 'regret', 'pay', 'watch your back', 'don\'t last long']
+            ? [
+                'kill',
+                'crush',
+                'destroy',
+                'threat',
+                'attack',
+                'hurt',
+                'enemies',
+                'revenge',
+                'regret',
+                'pay',
+                'watch your back',
+                "don't last long",
+              ]
             : []);
 
     if (effectiveHighlightedWords.isEmpty) {
@@ -243,14 +246,16 @@ class TextDetectionResultScreen extends StatelessWidget {
         children: [
           const TextSpan(text: '"'),
           ...words.map((word) {
-            final cleanWord = word.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
+            final cleanWord =
+                word.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
             final isHighlighted = effectiveHighlightedWords
                 .any((hw) => cleanWord.contains(hw.toLowerCase()));
             return TextSpan(
               text: '$word ',
               style: isHighlighted
                   ? TextStyle(
-                      backgroundColor: AppColors.error.withValues(alpha: 0.15),
+                      backgroundColor:
+                          AppColors.error.withValues(alpha: 0.15),
                       color: AppColors.error,
                       fontWeight: FontWeight.w600,
                       fontStyle: FontStyle.italic,
@@ -271,52 +276,35 @@ class TextDetectionResultScreen extends StatelessWidget {
       points = [
         {
           'title': 'Aggressive Tone Detected',
-          'subtitle': 'The text contains direct threats and assertive hostile language.',
+          'subtitle':
+              'The text contains direct threats and assertive hostile language.',
           'isViolent': true,
         },
         {
           'title': 'Contextual Reasoning',
-          'subtitle': 'Inference suggests a sequence of future harmful actions.',
+          'subtitle':
+              'Inference suggests a sequence of future harmful actions.',
           'isViolent': true,
         },
       ];
     } else {
-      final lowerText = analyzedText.toLowerCase();
-      final isPositive = ['renovation', 'community', 'safety', 'residents']
-          .any((k) => lowerText.contains(k));
-
-      if (isPositive) {
-        points = [
-          {
-            'title': 'Absence of Threats',
-            'subtitle': 'No aggressive verbs or threatening sentence structures were detected in the input.',
-            'isViolent': false,
-          },
-          {
-            'title': 'Positive Intent',
-            'subtitle': 'Contextual analysis identifies constructive and community-oriented keywords.',
-            'isViolent': false,
-          },
-        ];
-      } else {
-        points = [
-          {
-            'title': 'No aggressive tone detected',
-            'subtitle': null,
-            'isViolent': false,
-          },
-          {
-            'title': 'Informational or neutral language',
-            'subtitle': null,
-            'isViolent': false,
-          },
-          {
-            'title': 'No harmful intent identified',
-            'subtitle': null,
-            'isViolent': false,
-          },
-        ];
-      }
+      points = [
+        {
+          'title': 'No aggressive tone detected',
+          'subtitle': null,
+          'isViolent': false,
+        },
+        {
+          'title': 'Informational or neutral language',
+          'subtitle': null,
+          'isViolent': false,
+        },
+        {
+          'title': 'No harmful intent identified',
+          'subtitle': null,
+          'isViolent': false,
+        },
+      ];
     }
 
     return points.map((p) {
@@ -330,7 +318,9 @@ class TextDetectionResultScreen extends StatelessWidget {
             Container(
               margin: EdgeInsets.only(top: 2.h),
               child: Icon(
-                violent ? Icons.warning_amber_rounded : Icons.check_circle_outline,
+                violent
+                    ? Icons.warning_amber_rounded
+                    : Icons.check_circle_outline,
                 color: violent ? AppColors.error : AppColors.primary,
                 size: 18.sp,
               ),

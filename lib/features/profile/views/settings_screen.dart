@@ -24,8 +24,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back_ios,
-              color: AppColors.textPrimary, size: 20.sp),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.textPrimary,
+            size: 20.sp,
+          ),
         ),
         centerTitle: true,
         title: Text(
@@ -56,23 +59,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _SettingsTile(
                     icon: Icons.lock_outline,
                     title: 'Change Password',
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
-                    onTap: () => Navigator.pushNamed(
-                        context, Routes.changePassword),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textSecondary,
+                    ),
+                    onTap: () =>
+                        Navigator.pushNamed(context, Routes.changePassword),
                   ),
-                  Divider(
-                      height: 1, color: AppColors.border, indent: 52.w),
+                  Divider(height: 1, color: AppColors.border, indent: 52.w),
                   _SettingsTile(
                     icon: Icons.shield_outlined,
                     title: 'Two-step verification',
                     trailing: Switch(
                       value: _twoStepEnabled,
-                      onChanged: (v) =>
-                          setState(() => _twoStepEnabled = v),
+                      onChanged: (v) => setState(() => _twoStepEnabled = v),
                       activeThumbColor: AppColors.primary,
-                      activeTrackColor:
-                          AppColors.primary.withValues(alpha: 0.5),
+                      activeTrackColor: AppColors.primary.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                     onTap: () =>
                         setState(() => _twoStepEnabled = !_twoStepEnabled),
@@ -95,22 +99,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   _SettingsTile(
                     title: 'Data usage information',
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textSecondary,
+                    ),
                     onTap: () {},
                   ),
                   Divider(height: 1, color: AppColors.border),
                   _SettingsTile(
                     title: 'Privacy policy',
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textSecondary,
+                    ),
                     onTap: () {},
                   ),
                   Divider(height: 1, color: AppColors.border),
                   _SettingsTile(
                     title: 'Terms of service',
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textSecondary,
+                    ),
                     onTap: () {},
                   ),
                 ],
@@ -153,7 +163,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextButton.styleFrom(
                     minimumSize: Size.zero,
                     padding: EdgeInsets.symmetric(
-                        horizontal: 8.w, vertical: 4.h),
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
@@ -186,17 +198,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Dark mode',
                     trailing: Switch(
                       value: _darkModeEnabled,
-                      onChanged: (v) =>
-                          setState(() => _darkModeEnabled = v),
+                      onChanged: (v) => setState(() => _darkModeEnabled = v),
                       activeThumbColor: AppColors.primary,
-                      activeTrackColor:
-                          AppColors.primary.withValues(alpha: 0.5),
+                      activeTrackColor: AppColors.primary.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                     onTap: () =>
                         setState(() => _darkModeEnabled = !_darkModeEnabled),
                   ),
-                  Divider(
-                      height: 1, color: AppColors.border, indent: 52.w),
+                  Divider(height: 1, color: AppColors.border, indent: 52.w),
                   _SettingsTile(
                     icon: Icons.notifications_outlined,
                     title: 'Notification preferences',
@@ -205,11 +216,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onChanged: (v) =>
                           setState(() => _notificationsEnabled = v),
                       activeThumbColor: AppColors.primary,
-                      activeTrackColor:
-                          AppColors.primary.withValues(alpha: 0.5),
+                      activeTrackColor: AppColors.primary.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                     onTap: () => setState(
-                        () => _notificationsEnabled = !_notificationsEnabled),
+                      () => _notificationsEnabled = !_notificationsEnabled,
+                    ),
                   ),
                 ],
               ),
@@ -297,7 +310,7 @@ class _SettingsTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null) trailing!,
+            ?trailing,
           ],
         ),
       ),

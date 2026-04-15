@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
+import '../../../core/utils/dummy_data.dart';
 import '../models/detection_history_item.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -15,81 +16,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int _selectedTabIndex = 0;
   final List<String> _tabs = ['All', 'Text', 'Video'];
 
-  final List<DetectionHistoryItem> _historyItems = [
-    DetectionHistoryItem(
-      id: '1',
-      type: DetectionType.video,
-      result: DetectionResult.nonViolent,
-      dateTime: DateTime.now().subtract(const Duration(hours: 2)),
-      sourceUrl: 'youtube.com/watch?v=dQv...',
-      confidenceScore: null,
-    ),
-    DetectionHistoryItem(
-      id: '2',
-      type: DetectionType.text,
-      result: DetectionResult.nonViolent,
-      dateTime: DateTime.now().subtract(const Duration(hours: 5)),
-      sourceUrl: 'reddit.com/r/technology/cc...',
-    ),
-    DetectionHistoryItem(
-      id: '3',
-      type: DetectionType.video,
-      result: DetectionResult.violent,
-      dateTime: DateTime.now().subtract(const Duration(days: 1)),
-      sourceUrl: 'vimeo.com/channels/staff/...',
-      confidenceScore: 82,
-      flagReasons: [
-        'Identified high-impact physical actions in the video.',
-        'Detected rapid and forceful movements consistent with aggression.',
-        'Presence of aggressive postures and gestures between individuals.',
-      ],
-    ),
-    DetectionHistoryItem(
-      id: '4',
-      type: DetectionType.video,
-      result: DetectionResult.nonViolent,
-      dateTime: DateTime(2025, 5, 10),
-      sourceUrl: 'youtube.com/watch?v=dQv...',
-    ),
-    DetectionHistoryItem(
-      id: '5',
-      type: DetectionType.text,
-      result: DetectionResult.nonViolent,
-      dateTime: DateTime(2024, 4, 28),
-      sourceUrl: 'reddit.com/r/technology/cc...',
-    ),
-    DetectionHistoryItem(
-      id: '6',
-      type: DetectionType.video,
-      result: DetectionResult.violent,
-      dateTime: DateTime(2024, 4, 19),
-      sourceUrl: 'vimeo.com/channels/staff/...',
-      confidenceScore: 75,
-      flagReasons: [
-        'Identified high-impact physical actions in the video.',
-        'Detected rapid and forceful movements consistent with aggression.',
-      ],
-    ),
-    DetectionHistoryItem(
-      id: '7',
-      type: DetectionType.video,
-      result: DetectionResult.violent,
-      dateTime: DateTime(2024, 4, 10),
-      sourceUrl: 'vimeo.com/channels/staff/...',
-      confidenceScore: 91,
-      flagReasons: [
-        'Presence of aggressive postures and gestures between individuals.',
-      ],
-    ),
-    DetectionHistoryItem(
-      id: '8',
-      type: DetectionType.video,
-      result: DetectionResult.violent,
-      dateTime: DateTime(2024, 4, 9),
-      sourceUrl: 'vimeo.com/channels/staff/...',
-      confidenceScore: 68,
-    ),
-  ];
+  final List<DetectionHistoryItem> _historyItems = DummyData.historyItems;
 
   List<DetectionHistoryItem> get _filteredItems {
     if (_selectedTabIndex == 0) return _historyItems;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
+import '../../../core/utils/dummy_data.dart';
 import '../../history/views/history_screen.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../reports/views/reports_screen.dart';
@@ -94,26 +95,16 @@ class _HomeContent extends StatefulWidget {
 class _HomeContentState extends State<_HomeContent> {
   final TextEditingController _urlController = TextEditingController();
 
-  final List<_RecentLinkItem> _recentLinks = [
-    _RecentLinkItem(
-      url: 'youtube.com/watch?v=dQv...',
-      timeAgo: '2 hours ago',
-      isVideo: true,
-      status: _LinkStatus.safe,
-    ),
-    _RecentLinkItem(
-      url: 'reddit.com/r/technology/cc...',
-      timeAgo: '5 hours ago',
-      isVideo: false,
-      status: _LinkStatus.safe,
-    ),
-    _RecentLinkItem(
-      url: 'vimeo.com/channels/staff/...',
-      timeAgo: 'Yesterday',
-      isVideo: true,
-      status: _LinkStatus.flagged,
-    ),
-  ];
+  final List<_RecentLinkItem> _recentLinks = DummyData.recentLinks
+      .map((e) => _RecentLinkItem(
+            url: e['url'] as String,
+            timeAgo: e['timeAgo'] as String,
+            isVideo: e['isVideo'] as bool,
+            status: (e['isFlagged'] as bool)
+                ? _LinkStatus.flagged
+                : _LinkStatus.safe,
+          ))
+      .toList();
 
   @override
   void dispose() {

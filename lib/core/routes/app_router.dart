@@ -52,7 +52,6 @@ class AppRouter {
           VideoDetectionResultScreen(
             videoPath: args?['videoPath'],
             isViolent: args?['isViolent'] ?? false,
-            confidenceScore: args?['confidenceScore'] ?? 0,
             thumbnailPath: args?['thumbnailPath'],
           ),
           settings,

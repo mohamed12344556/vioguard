@@ -6,14 +6,12 @@ import '../../../core/routes/routes.dart';
 class VideoDetectionResultScreen extends StatelessWidget {
   final String? videoPath;
   final bool isViolent;
-  final int confidenceScore;
   final String? thumbnailPath;
 
   const VideoDetectionResultScreen({
     super.key,
     this.videoPath,
     required this.isViolent,
-    this.confidenceScore = 0,
     this.thumbnailPath,
   });
 
@@ -71,7 +69,10 @@ class VideoDetectionResultScreen extends StatelessWidget {
                   SizedBox(height: 10.h),
                   // Video row
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 10.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.background,
                       borderRadius: BorderRadius.circular(10.r),
@@ -97,7 +98,8 @@ class VideoDetectionResultScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                videoPath ?? 'https://storage.cloud.api/v/sec...',
+                                videoPath ??
+                                    'https://storage.cloud.api/v/sec...',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -218,7 +220,9 @@ class VideoDetectionResultScreen extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             Text(
-              'Our AI engine identified specific sequences in the uploaded media that violate safety guidelines regarding harmful behavior.',
+              isViolent
+                  ? 'Our AI engine identified specific sequences in the uploaded media that violate safety guidelines regarding harmful behavior.'
+                  : 'Our AI engine has verified this video content as safe and free of harmful behavior.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14.sp,
@@ -226,65 +230,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            // Confidence Level (violent) or bullet points (non-violent)
-            if (isViolent) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Confidence Level',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    '$confidenceScore%',
-                    style: TextStyle(
-                      color: AppColors.error,
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6.r),
-                child: LinearProgressIndicator(
-                  value: confidenceScore / 100,
-                  backgroundColor: AppColors.border,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.error),
-                  minHeight: 10.h,
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: AppColors.textLight,
-                    size: 14.sp,
-                  ),
-                  SizedBox(width: 6.w),
-                  Expanded(
-                    child: Text(
-                      'Statistical confidence based on current algorithmic model analysis of frame-by-frame metadata.',
-                      style: TextStyle(
-                        color: AppColors.textLight,
-                        fontSize: 12.sp,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ] else ...[
-              _buildNonViolentBullets(),
-            ],
+            _buildResultBullets(),
             SizedBox(height: 32.h),
             // Analyze Another Button
             SizedBox(
@@ -292,7 +238,10 @@ class VideoDetectionResultScreen extends StatelessWidget {
               height: 52.h,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, Routes.videoDetection);
+                  Navigator.pushReplacementNamed(
+                    context,
+                    Routes.videoDetection,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -318,12 +267,23 @@ class VideoDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNonViolentBullets() {
-    final bullets = [
-      'Normal activity detected',
-      'No threat indicators found',
-      'Standard behavioral patterns',
-    ];
+  Widget _buildResultBullets() {
+    final List<String> bullets;
+    final bool violent = isViolent;
+
+    if (violent) {
+      bullets = [
+        'High-impact physical actions detected',
+        'Aggressive postures and gestures identified',
+        'Rapid forceful movements consistent with aggression',
+      ];
+    } else {
+      bullets = [
+        'Normal activity detected',
+        'No threat indicators found',
+        'Standard behavioral patterns',
+      ];
+    }
 
     return Column(
       children: bullets.map((b) {
@@ -332,16 +292,20 @@ class VideoDetectionResultScreen extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                Icons.check_circle_outline,
-                color: AppColors.success,
+                violent
+                    ? Icons.warning_amber_rounded
+                    : Icons.check_circle_outline,
+                color: violent ? AppColors.error : AppColors.success,
                 size: 18.sp,
               ),
               SizedBox(width: 10.w),
-              Text(
-                b,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14.sp,
+              Expanded(
+                child: Text(
+                  b,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14.sp,
+                  ),
                 ),
               ),
             ],
