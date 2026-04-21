@@ -12,33 +12,16 @@ class ProfileScreen extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       child: Column(
         children: [
-          // Title row with settings icon
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SizedBox(width: 40.w),
-              Text(
-                'Profile',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                ),
+          // Title
+          Center(
+            child: Text(
+              'Profile',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
               ),
-              SizedBox(
-                width: 40.w,
-                child: IconButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, Routes.settings),
-                  icon: Icon(
-                    Icons.settings_outlined,
-                    color: AppColors.textSecondary,
-                    size: 22.sp,
-                  ),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-            ],
+            ),
           ),
           SizedBox(height: 24.h),
           // Profile Card

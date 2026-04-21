@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
 import '../../../core/utils/dummy_data.dart';
+import '../../history/models/detection_history_item.dart';
 import '../../history/views/history_screen.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../reports/views/reports_screen.dart';
@@ -21,6 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: IndexedStack(
           index: _currentIndex,
@@ -106,8 +108,19 @@ class _HomeContentState extends State<_HomeContent> {
           ))
       .toList();
 
+  List<DetectionHistoryItem> get _historyItems => DummyData.historyItems;
+
+  @override
+  void initState() {
+    super.initState();
+    _urlController.addListener(_onUrlChanged);
+  }
+
+  void _onUrlChanged() => setState(() {});
+
   @override
   void dispose() {
+    _urlController.removeListener(_onUrlChanged);
     _urlController.dispose();
     super.dispose();
   }
@@ -125,6 +138,7 @@ class _HomeContentState extends State<_HomeContent> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,7 +163,7 @@ class _HomeContentState extends State<_HomeContent> {
                 ),
               ),
               IconButton(
-                onPressed: () {},
+                onPressed: () => Navigator.pushNamed(context, Routes.settings),
                 icon: Icon(
                   Icons.settings_outlined,
                   color: AppColors.primary,
@@ -187,22 +201,35 @@ class _HomeContentState extends State<_HomeContent> {
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
-                  child: TextField(
-                    controller: _urlController,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: 'Paste URL here...',
-                      hintStyle: TextStyle(
-                        color: AppColors.textLight,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      inputDecorationTheme: const InputDecorationTheme(
+                        filled: false,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: _urlController,
+                      decoration: InputDecoration(
+                        hintText: 'Paste URL here...',
+                        hintStyle: TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 14.sp,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
                         fontSize: 14.sp,
                       ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14.sp,
                     ),
                   ),
                 ),
@@ -306,9 +333,10 @@ class _HomeContentState extends State<_HomeContent> {
           // Recent Links List
           ...List.generate(_recentLinks.length, (i) {
             final item = _recentLinks[i];
+            final historyItem = i < _historyItems.length ? _historyItems[i] : null;
             return Padding(
               padding: EdgeInsets.only(bottom: 10.h),
-              child: _RecentLinkCard(item: item),
+              child: _RecentLinkCard(item: item, historyItem: historyItem),
             );
           }),
           SizedBox(height: 12.h),
@@ -366,81 +394,91 @@ class _RecentLinkItem {
 
 class _RecentLinkCard extends StatelessWidget {
   final _RecentLinkItem item;
+  final DetectionHistoryItem? historyItem;
 
-  const _RecentLinkCard({required this.item});
+  const _RecentLinkCard({required this.item, this.historyItem});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            width: 40.w,
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10.r),
+    return GestureDetector(
+      onTap: historyItem != null
+          ? () => Navigator.pushNamed(
+                context,
+                Routes.detectionDetails,
+                arguments: historyItem,
+              )
+          : null,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 40.w,
+              height: 40.h,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(
+                item.isVideo ? Icons.play_circle_outline : Icons.description_outlined,
+                color: AppColors.primary,
+                size: 20.sp,
+              ),
             ),
-            child: Icon(
-              item.isVideo ? Icons.play_circle_outline : Icons.description_outlined,
-              color: AppColors.primary,
-              size: 20.sp,
-            ),
-          ),
-          SizedBox(width: 12.w),
-          // URL + time
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.url,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
+            SizedBox(width: 12.w),
+            // URL + time
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.url,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                SizedBox(height: 4.h),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.access_time,
-                      color: AppColors.textLight,
-                      size: 12.sp,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      item.timeAgo,
-                      style: TextStyle(
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
                         color: AppColors.textLight,
-                        fontSize: 12.sp,
+                        size: 12.sp,
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      SizedBox(width: 4.w),
+                      Text(
+                        item.timeAgo,
+                        style: TextStyle(
+                          color: AppColors.textLight,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          SizedBox(width: 8.w),
-          // Status badge
-          _StatusBadge(status: item.status),
-          SizedBox(width: 4.w),
-          Icon(
-            Icons.chevron_right,
-            color: AppColors.textLight,
-            size: 18.sp,
-          ),
-        ],
+            SizedBox(width: 8.w),
+            // Status badge
+            _StatusBadge(status: item.status),
+            SizedBox(width: 4.w),
+            Icon(
+              Icons.chevron_right,
+              color: AppColors.textLight,
+              size: 18.sp,
+            ),
+          ],
+        ),
       ),
     );
   }
