@@ -71,7 +71,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ),
         ),
       ),
-      body: Padding(
+      resizeToAvoidBottomInset: true,
+      body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
         child: Form(
           key: _formKey,
@@ -128,7 +129,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   return null;
                 },
               ),
-              const Spacer(),
+              SizedBox(height: 32.h),
               // Update Password button
               SizedBox(
                 width: double.infinity,
@@ -247,7 +248,7 @@ class _PasswordField extends StatelessWidget {
               borderSide: const BorderSide(color: AppColors.error),
             ),
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: Colors.white,
           ),
         ),
       ],

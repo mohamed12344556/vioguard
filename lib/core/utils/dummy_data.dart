@@ -35,7 +35,7 @@ class DummyData {
       'isFlagged': false,
     },
     {
-      'url': 'vimeo.com/channels/staff/...',
+      'url': 'vimeo.com/channels/staff/...', 
       'timeAgo': 'Yesterday',
       'isVideo': true,
       'isFlagged': true,
@@ -63,79 +63,79 @@ class DummyData {
   // ---------------------------------------------------------------------------
 
   static List<DetectionHistoryItem> get historyItems => [
-        DetectionHistoryItem(
-          id: '1',
-          type: DetectionType.video,
-          result: DetectionResult.nonViolent,
-          dateTime: DateTime.now().subtract(const Duration(hours: 2)),
-          sourceUrl: 'youtube.com/watch?v=dQv...',
-        ),
-        DetectionHistoryItem(
-          id: '2',
-          type: DetectionType.text,
-          result: DetectionResult.nonViolent,
-          dateTime: DateTime.now().subtract(const Duration(hours: 5)),
-          sourceUrl: 'reddit.com/r/technology/cc...',
-          content:
-              'The renovation project will improve community safety for all residents.',
-        ),
-        DetectionHistoryItem(
-          id: '3',
-          type: DetectionType.video,
-          result: DetectionResult.violent,
-          dateTime: DateTime.now().subtract(const Duration(days: 1)),
-          sourceUrl: 'vimeo.com/channels/staff/...',
-          flagReasons: [
-            'Identified high-impact physical actions in the video.',
-            'Detected rapid and forceful movements consistent with aggression.',
-            'Presence of aggressive postures and gestures between individuals.',
-          ],
-        ),
-        DetectionHistoryItem(
-          id: '4',
-          type: DetectionType.video,
-          result: DetectionResult.nonViolent,
-          dateTime: DateTime(2025, 5, 10),
-          sourceUrl: 'youtube.com/watch?v=dQv...',
-        ),
-        DetectionHistoryItem(
-          id: '5',
-          type: DetectionType.text,
-          result: DetectionResult.nonViolent,
-          dateTime: DateTime(2024, 4, 28),
-          sourceUrl: 'reddit.com/r/technology/cc...',
-          content:
-              'Breaking news: local government announces new public parks initiative.',
-        ),
-        DetectionHistoryItem(
-          id: '6',
-          type: DetectionType.video,
-          result: DetectionResult.violent,
-          dateTime: DateTime(2024, 4, 19),
-          sourceUrl: 'vimeo.com/channels/staff/...',
-          flagReasons: [
-            'Identified high-impact physical actions in the video.',
-            'Detected rapid and forceful movements consistent with aggression.',
-          ],
-        ),
-        DetectionHistoryItem(
-          id: '7',
-          type: DetectionType.video,
-          result: DetectionResult.violent,
-          dateTime: DateTime(2024, 4, 10),
-          sourceUrl: 'vimeo.com/channels/staff/...',
-          flagReasons: [
-            'Presence of aggressive postures and gestures between individuals.',
-          ],
-        ),
-        DetectionHistoryItem(
-          id: '8',
-          type: DetectionType.video,
-          result: DetectionResult.violent,
-          dateTime: DateTime(2024, 4, 9),
-          sourceUrl: 'vimeo.com/channels/staff/...',
-        ),
-      ];
+    DetectionHistoryItem(
+      id: '1',
+      type: DetectionType.video,
+      result: DetectionResult.nonViolent,
+      dateTime: DateTime.now().subtract(const Duration(hours: 2)),
+      sourceUrl: 'youtube.com/watch?v=dQv...',
+    ),
+    DetectionHistoryItem(
+      id: '2',
+      type: DetectionType.text,
+      result: DetectionResult.nonViolent,
+      dateTime: DateTime.now().subtract(const Duration(hours: 5)),
+      sourceUrl: 'reddit.com/r/technology/cc...',
+      content:
+          'The renovation project will improve community safety for all residents.',
+    ),
+    DetectionHistoryItem(
+      id: '3',
+      type: DetectionType.video,
+      result: DetectionResult.violent,
+      dateTime: DateTime.now().subtract(const Duration(days: 1)),
+      sourceUrl: 'vimeo.com/channels/staff/...',
+      flagReasons: [
+        'Identified high-impact physical actions in the video.',
+        'Detected rapid and forceful movements consistent with aggression.',
+        'Presence of aggressive postures and gestures between individuals.',
+      ],
+    ),
+    DetectionHistoryItem(
+      id: '4',
+      type: DetectionType.video,
+      result: DetectionResult.nonViolent,
+      dateTime: DateTime(2025, 5, 10),
+      sourceUrl: 'youtube.com/watch?v=dQv...',
+    ),
+    DetectionHistoryItem(
+      id: '5',
+      type: DetectionType.text,
+      result: DetectionResult.nonViolent,
+      dateTime: DateTime(2024, 4, 28),
+      sourceUrl: 'reddit.com/r/technology/cc...',
+      content:
+          'Breaking news: local government announces new public parks initiative.',
+    ),
+    DetectionHistoryItem(
+      id: '6',
+      type: DetectionType.video,
+      result: DetectionResult.violent,
+      dateTime: DateTime(2024, 4, 19),
+      sourceUrl: 'vimeo.com/channels/staff/...',
+      flagReasons: [
+        'Identified high-impact physical actions in the video.',
+        'Detected rapid and forceful movements consistent with aggression.',
+      ],
+    ),
+    DetectionHistoryItem(
+      id: '7',
+      type: DetectionType.video,
+      result: DetectionResult.violent,
+      dateTime: DateTime(2024, 4, 10),
+      sourceUrl: 'vimeo.com/channels/staff/...',
+      flagReasons: [
+        'Presence of aggressive postures and gestures between individuals.',
+      ],
+    ),
+    DetectionHistoryItem(
+      id: '8',
+      type: DetectionType.video,
+      result: DetectionResult.violent,
+      dateTime: DateTime(2024, 4, 9),
+      sourceUrl: 'vimeo.com/channels/staff/...',
+    ),
+  ];
 
   // ---------------------------------------------------------------------------
   // Sample analyzed texts (for TextDetectionScreen demos)

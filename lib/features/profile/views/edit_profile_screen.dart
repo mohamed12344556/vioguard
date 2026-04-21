@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -15,6 +17,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _lastNameController = TextEditingController(text: 'Doe');
   final _emailController = TextEditingController(text: 'john.doe@example.com');
   bool _isLoading = false;
+  XFile? _pickedImage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked != null) {
+      setState(() => _pickedImage = picked);
+    }
+  }
 
   @override
   void dispose() {
@@ -49,8 +63,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back_ios,
-              color: AppColors.textPrimary, size: 20.sp),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.textPrimary,
+            size: 20.sp,
+          ),
         ),
         centerTitle: true,
         title: Text(
@@ -80,57 +97,66 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Column(
                   children: [
                     // Avatar with edit overlay
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 80.w,
-                          height: 80.h,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.person_outline,
-                            color: AppColors.primary,
-                            size: 40.sp,
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            width: 26.w,
-                            height: 26.h,
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 80.w,
+                            height: 80.h,
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.border),
                             ),
-                            child: Icon(
-                              Icons.edit,
-                              color: AppColors.primary,
-                              size: 13.sp,
+                            clipBehavior: Clip.antiAlias,
+                            child: _pickedImage != null
+                                ? Image.file(
+                                    File(_pickedImage!.path),
+                                    fit: BoxFit.cover,
+                                  )
+                                : Icon(
+                                    Icons.person_outline,
+                                    color: AppColors.primary,
+                                    size: 40.sp,
+                                  ),
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 26.w,
+                              height: 26.h,
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                color: AppColors.primary,
+                                size: 13.sp,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     SizedBox(height: 8.h),
-                    TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        minimumSize: Size.zero,
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Padding(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 8.w, vertical: 4.h),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'Edit Picture',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w500,
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        child: Text(
+                          'Edit Picture',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ),
@@ -168,8 +194,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onPressed: _isLoading ? null : _saveChanges,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor:
-                        AppColors.primary.withValues(alpha: 0.4),
+                    disabledBackgroundColor: AppColors.primary.withValues(
+                      alpha: 0.4,
+                    ),
                     foregroundColor: Colors.white,
                     disabledForegroundColor: Colors.white,
                     elevation: 0,
@@ -252,8 +279,10 @@ class _EditableField extends StatelessWidget {
           validator: validator,
           style: TextStyle(color: AppColors.textPrimary, fontSize: 15.sp),
           decoration: InputDecoration(
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 14.w,
+              vertical: 14.h,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10.r),
               borderSide: const BorderSide(color: AppColors.border),
@@ -270,8 +299,13 @@ class _EditableField extends StatelessWidget {
               borderRadius: BorderRadius.circular(10.r),
               borderSide: const BorderSide(color: AppColors.error),
             ),
-            suffixIcon: Icon(Icons.edit_outlined,
-                color: AppColors.primary, size: 18.sp),
+            suffixIcon: Icon(
+              Icons.edit_outlined,
+              color: AppColors.primary,
+              size: 18.sp,
+            ),
+            filled: true,
+            fillColor: Colors.white,
           ),
         ),
       ],

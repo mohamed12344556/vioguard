@@ -213,6 +213,10 @@ class _HomeContentState extends State<_HomeContent> {
                     ),
                     child: TextField(
                       controller: _urlController,
+                      autocorrect: false,
+                      enableSuggestions: false,
+                      smartDashesType: SmartDashesType.disabled,
+                      smartQuotesType: SmartQuotesType.disabled,
                       decoration: InputDecoration(
                         hintText: 'Paste URL here...',
                         hintStyle: TextStyle(
@@ -229,6 +233,8 @@ class _HomeContentState extends State<_HomeContent> {
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 14.sp,
+                        decoration: TextDecoration.none,
+                        decorationColor: Colors.transparent,
                       ),
                     ),
                   ),
