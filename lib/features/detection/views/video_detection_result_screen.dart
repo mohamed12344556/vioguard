@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
 
@@ -14,6 +15,21 @@ class VideoDetectionResultScreen extends StatelessWidget {
     required this.isViolent,
     this.thumbnailPath,
   });
+
+  Future<void> _launchVideo(BuildContext ctx) async {
+    final raw = videoPath ?? '';
+    // Ensure URL has a valid scheme
+    final urlStr = raw.startsWith('http') ? raw : 'https://$raw';
+    final uri = Uri.tryParse(urlStr);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (!ctx.mounted) return;
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        const SnackBar(content: Text('Could not open video URL')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +144,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 42.h,
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () => _launchVideo(context),
                       icon: Icon(
                         Icons.open_in_new,
                         size: 16.sp,

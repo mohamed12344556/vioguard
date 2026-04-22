@@ -18,23 +18,90 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
 
+  Future<void> _showExitDialog() async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Text(
+          'Exit App',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 17.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to exit VioGuard?',
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 14.sp,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14.sp,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+            ),
+            child: Text(
+              'Exit',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldExit == true && mounted) {
+      // ignore: use_build_context_synchronously
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: const [
-            _HomeContent(),
-            HistoryScreen(),
-            ReportsScreen(),
-            ProfileScreen(),
-          ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _showExitDialog();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.surface,
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          child: IndexedStack(
+            index: _currentIndex,
+            children: const [
+              _HomeContent(),
+              HistoryScreen(),
+              ReportsScreen(),
+              ProfileScreen(),
+            ],
+          ),
         ),
+        bottomNavigationBar: _buildBottomNavigationBar(),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -130,8 +197,11 @@ class _HomeContentState extends State<_HomeContent> {
     if (url.isEmpty) return;
     Navigator.pushNamed(
       context,
-      Routes.videoDetection,
-      arguments: {'url': url},
+      Routes.videoDetectionResult,
+      arguments: {
+        'videoPath': url,
+        'isViolent': false, // TODO: replace with real API result
+      },
     );
   }
 

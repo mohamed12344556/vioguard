@@ -1,10 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String? _imagePath;
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +51,17 @@ class ProfileScreen extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.person_outline,
-                    color: AppColors.primary,
-                    size: 40.sp,
-                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: _imagePath != null
+                      ? Image.file(
+                          File(_imagePath!),
+                          fit: BoxFit.cover,
+                        )
+                      : Icon(
+                          Icons.person_outline,
+                          color: AppColors.primary,
+                          size: 40.sp,
+                        ),
                 ),
                 SizedBox(height: 20.h),
                 // Fields
@@ -61,8 +75,15 @@ class ProfileScreen extends StatelessWidget {
                 SizedBox(
                   width: 160.w,
                   child: OutlinedButton.icon(
-                    onPressed: () =>
-                        Navigator.pushNamed(context, Routes.editProfile),
+                    onPressed: () async {
+                        final result = await Navigator.pushNamed(
+                          context,
+                          Routes.editProfile,
+                        );
+                        if (result is String && result.isNotEmpty) {
+                          setState(() => _imagePath = result);
+                        }
+                      },
                     icon: Icon(Icons.edit_outlined, size: 16.sp),
                     label: Text(
                       'Edit Profile',

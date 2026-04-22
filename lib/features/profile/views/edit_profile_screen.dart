@@ -50,7 +50,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           backgroundColor: AppColors.success,
         ),
       );
-      Navigator.pop(context);
+      Navigator.pop(context, _pickedImage?.path ?? '');
     });
   }
 
