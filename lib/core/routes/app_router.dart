@@ -9,13 +9,12 @@ import '../../features/detection/views/text_detection_screen.dart';
 import '../../features/detection/views/text_detection_result_screen.dart';
 import '../../features/detection/views/video_detection_screen.dart';
 import '../../features/detection/views/video_detection_result_screen.dart';
+import '../../features/detection/data/models/video_prediction_response.dart';
 import '../../features/history/views/detection_details_screen.dart';
-import '../../features/history/models/detection_history_item.dart';
 import '../../features/profile/views/edit_profile_screen.dart';
 import '../../features/profile/views/change_password_screen.dart';
 import '../../features/profile/views/settings_screen.dart';
 
-/// Application Router
 class AppRouter {
   AppRouter._();
 
@@ -47,19 +46,15 @@ class AppRouter {
       case Routes.videoDetection:
         return _buildRoute(const VideoDetectionScreen(), settings);
       case Routes.videoDetectionResult:
-        final args = settings.arguments as Map<String, dynamic>?;
+        final response = settings.arguments as VideoPredictionResponse;
         return _buildRoute(
-          VideoDetectionResultScreen(
-            videoPath: args?['videoPath'],
-            isViolent: args?['isViolent'] ?? false,
-            thumbnailPath: args?['thumbnailPath'],
-          ),
+          VideoDetectionResultScreen(response: response),
           settings,
         );
       case Routes.detectionDetails:
-        final item = settings.arguments as DetectionHistoryItem;
+        final id = settings.arguments as String;
         return _buildRoute(
-          DetectionDetailsScreen(item: item),
+          DetectionDetailsScreen(historyId: id),
           settings,
         );
       case Routes.editProfile:

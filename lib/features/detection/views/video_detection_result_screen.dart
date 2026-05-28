@@ -1,38 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
+import '../data/models/video_prediction_response.dart';
 
 class VideoDetectionResultScreen extends StatelessWidget {
-  final String? videoPath;
-  final bool isViolent;
-  final String? thumbnailPath;
+  final VideoPredictionResponse response;
 
-  const VideoDetectionResultScreen({
-    super.key,
-    this.videoPath,
-    required this.isViolent,
-    this.thumbnailPath,
-  });
-
-  Future<void> _launchVideo(BuildContext ctx) async {
-    final raw = videoPath ?? '';
-    // Ensure URL has a valid scheme
-    final urlStr = raw.startsWith('http') ? raw : 'https://$raw';
-    final uri = Uri.tryParse(urlStr);
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (!ctx.mounted) return;
-      ScaffoldMessenger.of(ctx).showSnackBar(
-        const SnackBar(content: Text('Could not open video URL')),
-      );
-    }
-  }
+  const VideoDetectionResultScreen({super.key, required this.response});
 
   @override
   Widget build(BuildContext context) {
+    final isViolent = response.isViolent;
+    final confidencePct = (response.confidence * 100).toStringAsFixed(1);
+    final violencePct = (response.violence * 100).toStringAsFixed(1);
+    final nonViolencePct = (response.nonViolence * 100).toStringAsFixed(1);
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -61,115 +44,6 @@ class VideoDetectionResultScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Source Video Card
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SOURCE VIDEO',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  // Video row
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36.w,
-                          height: 36.h,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Icon(
-                            Icons.videocam_outlined,
-                            color: AppColors.primary,
-                            size: 18.sp,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                videoPath ??
-                                    'https://storage.cloud.api/v/sec...',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              SizedBox(height: 3.h),
-                              Text(
-                                'Uploaded 2 mins ago',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  // Open Video button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 42.h,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _launchVideo(context),
-                      icon: Icon(
-                        Icons.open_in_new,
-                        size: 16.sp,
-                        color: AppColors.primary,
-                      ),
-                      label: Text(
-                        'Open Video',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20.h),
             // Result Card
             Container(
               width: double.infinity,
@@ -210,10 +84,63 @@ class VideoDetectionResultScreen extends StatelessWidget {
                       height: 1.3,
                     ),
                   ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Label: ${response.label}',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14.sp,
+                    ),
+                  ),
                 ],
               ),
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: 24.h),
+            // Confidence Score
+            Row(
+              children: [
+                Icon(
+                  Icons.analytics_outlined,
+                  color: AppColors.textSecondary,
+                  size: 18.sp,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  'CONFIDENCE SCORES',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            // Overall Confidence
+            _buildScoreBar(
+              label: 'Overall Confidence',
+              value: response.confidence,
+              displayValue: '$confidencePct%',
+              color: AppColors.primary,
+            ),
+            SizedBox(height: 16.h),
+            // Violence Score
+            _buildScoreBar(
+              label: 'Violence',
+              value: response.violence,
+              displayValue: '$violencePct%',
+              color: AppColors.error,
+            ),
+            SizedBox(height: 16.h),
+            // Non-Violence Score
+            _buildScoreBar(
+              label: 'Non-Violence',
+              value: response.nonViolence,
+              displayValue: '$nonViolencePct%',
+              color: AppColors.success,
+            ),
+            SizedBox(height: 24.h),
             // Analysis Summary
             Row(
               children: [
@@ -237,8 +164,8 @@ class VideoDetectionResultScreen extends StatelessWidget {
             SizedBox(height: 8.h),
             Text(
               isViolent
-                  ? 'Our AI engine identified specific sequences in the uploaded media that violate safety guidelines regarding harmful behavior.'
-                  : 'Our AI engine has verified this video content as safe and free of harmful behavior.',
+                  ? 'Our AI model identified patterns in the video that are consistent with violent content with $confidencePct% confidence.'
+                  : 'Our AI model has verified this video content as safe and free of violent behavior with $confidencePct% confidence.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14.sp,
@@ -246,7 +173,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            _buildResultBullets(),
+            _buildResultBullets(isViolent),
             SizedBox(height: 32.h),
             // Analyze Another Button
             SizedBox(
@@ -268,7 +195,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
                   elevation: 0,
                 ),
                 child: Text(
-                  'Analyze Another Content',
+                  'Analyze Another Video',
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
@@ -283,9 +210,52 @@ class VideoDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildResultBullets() {
+  Widget _buildScoreBar({
+    required String label,
+    required double value,
+    required String displayValue,
+    required Color color,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              displayValue,
+              style: TextStyle(
+                color: color,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4.r),
+          child: LinearProgressIndicator(
+            value: value.clamp(0.0, 1.0),
+            minHeight: 8.h,
+            backgroundColor: color.withValues(alpha: 0.12),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResultBullets(bool violent) {
     final List<String> bullets;
-    final bool violent = isViolent;
 
     if (violent) {
       bullets = [

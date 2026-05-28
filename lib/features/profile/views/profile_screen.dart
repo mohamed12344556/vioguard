@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
+import '../../auth/presentation/bloc/auth_cubit.dart';
+import '../presentation/cubit/profile_cubit.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,165 +18,186 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _imagePath;
 
   @override
+  void initState() {
+    super.initState();
+    context.read<ProfileCubit>().loadProfile();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      child: Column(
-        children: [
-          // Title
-          Center(
-            child: Text(
-              'Profile',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          SizedBox(height: 24.h),
-          // Profile Card
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20.w),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              children: [
-                // Avatar
-                Container(
-                  width: 80.w,
-                  height: 80.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+    return BlocBuilder<ProfileCubit, ProfileState>(
+      builder: (context, state) {
+        String fullName = '';
+        String email = '';
+
+        if (state is ProfileLoaded) {
+          fullName = state.profile.fullName;
+          email = state.profile.email;
+        }
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          child: Column(
+            children: [
+              Center(
+                child: Text(
+                  'Profile',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: _imagePath != null
-                      ? Image.file(
-                          File(_imagePath!),
-                          fit: BoxFit.cover,
-                        )
-                      : Icon(
-                          Icons.person_outline,
-                          color: AppColors.primary,
-                          size: 40.sp,
-                        ),
                 ),
-                SizedBox(height: 20.h),
-                // Fields
-                _ProfileField(label: 'First Name', value: 'John'),
+              ),
+              SizedBox(height: 24.h),
+              if (state is ProfileLoading)
+                const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                )
+              else if (state is ProfileError)
+                Column(
+                  children: [
+                    Text(state.message,
+                        style: TextStyle(
+                            color: AppColors.textSecondary, fontSize: 14.sp),
+                        textAlign: TextAlign.center),
+                    SizedBox(height: 12.h),
+                    TextButton(
+                      onPressed: () =>
+                          context.read<ProfileCubit>().loadProfile(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                )
+              else ...[
+                // Profile Card
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 80.w,
+                        height: 80.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: _imagePath != null
+                            ? Image.file(File(_imagePath!), fit: BoxFit.cover)
+                            : Icon(Icons.person_outline,
+                                color: AppColors.primary, size: 40.sp),
+                      ),
+                      SizedBox(height: 20.h),
+                      _ProfileField(label: 'Full Name', value: fullName),
+                      SizedBox(height: 16.h),
+                      _ProfileField(label: 'Email', value: email),
+                      SizedBox(height: 20.h),
+                      SizedBox(
+                        width: 160.w,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final result = await Navigator.pushNamed(
+                              context,
+                              Routes.editProfile,
+                            );
+                            if (!mounted) return;
+                            if (result is String && result.isNotEmpty) {
+                              setState(() => _imagePath = result);
+                            }
+                            context.read<ProfileCubit>().loadProfile();
+                          },
+                          icon: Icon(Icons.edit_outlined, size: 16.sp),
+                          label: Text(
+                            'Edit Profile',
+                            style: TextStyle(
+                                fontSize: 14.sp, fontWeight: FontWeight.w500),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(color: AppColors.border),
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25.r),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 16.h),
-                _ProfileField(label: 'Last Name', value: 'Doe'),
-                SizedBox(height: 16.h),
-                _ProfileField(label: 'Email', value: 'john.doe@example.com'),
-                SizedBox(height: 20.h),
-                // Edit Profile button
+                // Log Out
                 SizedBox(
-                  width: 160.w,
+                  width: double.infinity,
+                  height: 52.h,
                   child: OutlinedButton.icon(
-                    onPressed: () async {
-                        final result = await Navigator.pushNamed(
-                          context,
-                          Routes.editProfile,
-                        );
-                        if (result is String && result.isNotEmpty) {
-                          setState(() => _imagePath = result);
-                        }
-                      },
-                    icon: Icon(Icons.edit_outlined, size: 16.sp),
-                    label: Text(
-                      'Edit Profile',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
+                    onPressed: () => _showLogoutDialog(context),
+                    icon: Icon(Icons.logout, size: 20.sp),
+                    label: Text('Log Out',
+                        style: TextStyle(
+                            fontSize: 15.sp, fontWeight: FontWeight.w500)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textPrimary,
+                      side: BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
                       ),
                     ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.border),
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                // Delete Account
+                SizedBox(
+                  width: double.infinity,
+                  height: 52.h,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showDeleteAccountDialog(context),
+                    icon: Icon(Icons.delete_outline, size: 20.sp),
+                    label: Text('Delete Account',
+                        style: TextStyle(
+                            fontSize: 15.sp, fontWeight: FontWeight.w600)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25.r),
+                        borderRadius: BorderRadius.circular(30.r),
                       ),
                     ),
                   ),
                 ),
               ],
-            ),
+              SizedBox(height: 16.h),
+            ],
           ),
-          SizedBox(height: 16.h),
-          // Log Out button
-          SizedBox(
-            width: double.infinity,
-            height: 52.h,
-            child: OutlinedButton.icon(
-              onPressed: () => _showLogoutDialog(context),
-              icon: Icon(Icons.logout, size: 20.sp),
-              label: Text(
-                'Log Out',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
-                side: BorderSide(color: AppColors.border),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 12.h),
-          // Delete Account button
-          SizedBox(
-            width: double.infinity,
-            height: 52.h,
-            child: ElevatedButton.icon(
-              onPressed: () => _showDeleteAccountDialog(context),
-              icon: Icon(Icons.delete_outline, size: 20.sp),
-              label: Text(
-                'Delete Account',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 16.h),
-        ],
-      ),
+        );
+      },
     );
   }
 
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Log Out'),
         content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
+              context.read<AuthCubit>().logout();
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 Routes.login,
@@ -190,19 +214,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showDeleteAccountDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Delete Account'),
         content: const Text(
           'Are you sure you want to delete your account? This action cannot be undone.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
+              context.read<AuthCubit>().logout();
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 Routes.login,
@@ -228,13 +253,9 @@ class _ProfileField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 13.sp,
-          ),
-        ),
+        Text(label,
+            style:
+                TextStyle(color: AppColors.textSecondary, fontSize: 13.sp)),
         SizedBox(height: 6.h),
         Container(
           width: double.infinity,
@@ -244,13 +265,9 @@ class _ProfileField extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(color: AppColors.border),
           ),
-          child: Text(
-            value,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 15.sp,
-            ),
-          ),
+          child: Text(value,
+              style: TextStyle(
+                  color: AppColors.textPrimary, fontSize: 15.sp)),
         ),
       ],
     );

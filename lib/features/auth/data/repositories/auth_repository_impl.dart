@@ -1,9 +1,11 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/errors/failure.dart';
 import '../../../../core/errors/exceptions.dart';
-import '../../domain/entities/auth_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
+import '../models/login_request.dart';
+import '../models/login_response.dart';
+import '../models/register_request.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -11,26 +13,55 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<AuthEntity>>> getAuths() async {
+  Future<Either<Failure, LoginResponse>> login({
+    required String email,
+    required String password,
+  }) async {
     try {
-      final result = await remoteDataSource.getAuths();
+      final result = await remoteDataSource.login(
+        LoginRequest(email: email, password: password),
+      );
       return Right(result);
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on NetworkException catch (e) {
       return Left(NetworkFailure(message: e.message));
+    } on TimeoutException {
+      return const Left(TimeoutFailure());
+    } on AppException catch (e) {
+      return Left(ServerFailure(message: e.message));
     }
   }
 
   @override
-  Future<Either<Failure, AuthEntity>> getAuthById(String id) async {
+  Future<Either<Failure, void>> register({
+    required String fullName,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) async {
     try {
-      final result = await remoteDataSource.getAuthById(id);
-      return Right(result);
+      await remoteDataSource.register(
+        RegisterRequest(
+          fullName: fullName,
+          email: email,
+          password: password,
+          confirmPassword: confirmPassword,
+        ),
+      );
+      return const Right(null);
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(message: e.message, errors: e.errors));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on NetworkException catch (e) {
       return Left(NetworkFailure(message: e.message));
+    } on TimeoutException {
+      return const Left(TimeoutFailure());
+    } on AppException catch (e) {
+      return Left(ServerFailure(message: e.message));
     }
   }
 }

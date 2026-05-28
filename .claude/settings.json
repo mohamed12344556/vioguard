@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:documenter.getpostman.com)",
+      "WebFetch(domain:www.postman.com)",
+      "WebFetch(domain:documenter.pstmn.io)",
+      "Bash(curl -s \"https://documenter.getpostman.com/view/54212516/2sBXwmPsfe\")",
+      "Bash(Select-String -Pattern \"collection_id|collectionId|pm-collection|api\\\\.getpostman|schemas|endpoint|url|method\" -AllMatches)",
+      "Bash(Select-Object -First 30)",
+      "PowerShell($response = Invoke-WebRequest -Uri \"https://documenter.getpostman.com/view/54212516/2sBXwmPsfe\" -UseBasicParsing; $response.Content.Length; $response.Content.Substring\\(0, [Math]::Min\\(5000, $response.Content.Length\\)\\))",
+      "PowerShell($response = Invoke-WebRequest -Uri \"https://documenter.gw.postman.com/api/collections/54212516/2sBXwmPsfe?segregateAuth=true&versionTag=latest\" -UseBasicParsing; $response.Content | Out-File -FilePath \"d:\\\\Flutter Projects\\\\vioguard\\\\postman_collection.json\" -Encoding utf8; $response.Content.Length)",
+      "Bash(Get-ChildItem -Path \"D:\\\\Flutter Projects\\\\vioguard\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "PowerShell(flutter analyze)"
+    ]
+  }
+}

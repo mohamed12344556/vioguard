@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/routes/app_router.dart';
 import 'core/routes/routes.dart';
 import 'core/theme/app_theme.dart';
 import 'core/di/injection_container.dart' as di;
+import 'core/di/injection_container.dart';
+import 'core/api/token_storage.dart';
 import 'core/localization/localization_manager.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'features/auth/presentation/bloc/auth_cubit.dart';
+import 'features/detection/presentation/cubit/detection_cubit.dart';
+import 'features/history/presentation/cubit/history_cubit.dart';
+import 'features/reports/presentation/cubit/reports_cubit.dart';
+import 'features/profile/presentation/cubit/profile_cubit.dart';
+import 'features/detection/presentation/cubit/video_prediction_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
-  // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -26,7 +33,6 @@ void main() async {
     ),
   );
 
-  // Initialize dependency injection
   await di.init();
 
   runApp(
@@ -45,24 +51,36 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (context, child) {
-        return MaterialApp(
-          title: 'Flutter Forge App',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.system,
-          initialRoute: Routes.login,
-          onGenerateRoute: AppRouter.generateRoute,
-          localizationsDelegates: context.localizationDelegates,
-          supportedLocales: context.supportedLocales,
-          locale: context.locale,
-        );
-      },
+    final isLoggedIn = sl<TokenStorage>().isLoggedIn;
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<AuthCubit>()),
+        BlocProvider(create: (_) => sl<DetectionCubit>()),
+        BlocProvider(create: (_) => sl<HistoryCubit>()),
+        BlocProvider(create: (_) => sl<ReportsCubit>()),
+        BlocProvider(create: (_) => sl<ProfileCubit>()),
+        BlocProvider(create: (_) => sl<VideoPredictionCubit>()),
+      ],
+      child: ScreenUtilInit(
+        designSize: const Size(375, 812),
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (context, child) {
+          return MaterialApp(
+            title: 'VioGuard',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.system,
+            initialRoute: isLoggedIn ? Routes.home : Routes.login,
+            onGenerateRoute: AppRouter.generateRoute,
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
+          );
+        },
+      ),
     );
   }
 }

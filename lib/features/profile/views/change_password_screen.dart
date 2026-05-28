@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
+import '../presentation/cubit/profile_cubit.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -18,7 +20,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _showCurrent = false;
   bool _showNew = false;
   bool _showConfirm = false;
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -30,18 +31,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   void _updatePassword() {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-    Future.delayed(const Duration(seconds: 1), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password updated successfully'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      Navigator.pop(context);
-    });
+    context.read<ProfileCubit>().changePassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
+          confirmPassword: _confirmPasswordController.text,
+        );
   }
 
   bool get _hasInput =>
@@ -72,101 +66,125 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         ),
       ),
       resizeToAvoidBottomInset: true,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-        child: Form(
-          key: _formKey,
-          onChanged: () => setState(() {}),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Current Password
-              _PasswordField(
-                label: 'Current Password',
-                controller: _currentPasswordController,
-                hint: 'Enter current password',
-                showPassword: _showCurrent,
-                onToggle: () => setState(() => _showCurrent = !_showCurrent),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
+      body: BlocListener<ProfileCubit, ProfileState>(
+        listener: (context, state) {
+          if (state is PasswordChangeSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Password updated successfully'),
+                backgroundColor: AppColors.success,
               ),
-              SizedBox(height: 20.h),
-              // New Password
-              _PasswordField(
-                label: 'New Password',
-                controller: _newPasswordController,
-                hint: 'Enter new password',
-                showPassword: _showNew,
-                onToggle: () => setState(() => _showNew = !_showNew),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
-                  if (v.length < 8) return 'At least 8 characters';
-                  return null;
-                },
+            );
+            Navigator.pop(context);
+          } else if (state is ProfileError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
               ),
-              SizedBox(height: 6.h),
-              Text(
-                'Password must be at least 8 characters and include a number or symbol.',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12.sp,
-                  height: 1.4,
+            );
+          }
+        },
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+          child: Form(
+            key: _formKey,
+            onChanged: () => setState(() {}),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _PasswordField(
+                  label: 'Current Password',
+                  controller: _currentPasswordController,
+                  hint: 'Enter current password',
+                  showPassword: _showCurrent,
+                  onToggle: () =>
+                      setState(() => _showCurrent = !_showCurrent),
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Required' : null,
                 ),
-              ),
-              SizedBox(height: 20.h),
-              // Confirm New Password
-              _PasswordField(
-                label: 'Confirm New Password',
-                controller: _confirmPasswordController,
-                hint: 'Confirm new password',
-                showPassword: _showConfirm,
-                onToggle: () => setState(() => _showConfirm = !_showConfirm),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
-                  if (v != _newPasswordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 32.h),
-              // Update Password button
-              SizedBox(
-                width: double.infinity,
-                height: 52.h,
-                child: ElevatedButton(
-                  onPressed: _hasInput && !_isLoading ? _updatePassword : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    disabledBackgroundColor:
-                        AppColors.primary.withValues(alpha: 0.4),
-                    foregroundColor: Colors.white,
-                    disabledForegroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.r),
-                    ),
+                SizedBox(height: 20.h),
+                _PasswordField(
+                  label: 'New Password',
+                  controller: _newPasswordController,
+                  hint: 'Enter new password',
+                  showPassword: _showNew,
+                  onToggle: () => setState(() => _showNew = !_showNew),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Required';
+                    if (v.length < 8) return 'At least 8 characters';
+                    return null;
+                  },
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  'Password must be at least 8 characters and include a number or symbol.',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12.sp,
+                    height: 1.4,
                   ),
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 22.w,
-                          height: 22.h,
-                          child: const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : Text(
-                          'Update Password',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
+                ),
+                SizedBox(height: 20.h),
+                _PasswordField(
+                  label: 'Confirm New Password',
+                  controller: _confirmPasswordController,
+                  hint: 'Confirm new password',
+                  showPassword: _showConfirm,
+                  onToggle: () =>
+                      setState(() => _showConfirm = !_showConfirm),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Required';
+                    if (v != _newPasswordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 32.h),
+                BlocBuilder<ProfileCubit, ProfileState>(
+                  builder: (context, state) {
+                    final isLoading = state is ProfileUpdating;
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 52.h,
+                      child: ElevatedButton(
+                        onPressed:
+                            _hasInput && !isLoading ? _updatePassword : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          disabledBackgroundColor:
+                              AppColors.primary.withValues(alpha: 0.4),
+                          foregroundColor: Colors.white,
+                          disabledForegroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.r),
                           ),
                         ),
+                        child: isLoading
+                            ? SizedBox(
+                                width: 22.w,
+                                height: 22.h,
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : Text(
+                                'Update Password',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    );
+                  },
                 ),
-              ),
-              SizedBox(height: 16.h),
-            ],
+                SizedBox(height: 16.h),
+              ],
+            ),
           ),
         ),
       ),
@@ -209,24 +227,22 @@ class _PasswordField extends StatelessWidget {
           controller: controller,
           obscureText: !showPassword,
           validator: validator,
-          style: TextStyle(color: AppColors.textPrimary, fontSize: 15.sp),
+          style:
+              TextStyle(color: AppColors.textPrimary, fontSize: 15.sp),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(
-              color: AppColors.textLight,
-              fontSize: 14.sp,
-            ),
+            hintStyle:
+                TextStyle(color: AppColors.textLight, fontSize: 14.sp),
             contentPadding:
                 EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-            prefixIcon: Icon(
-              Icons.lock_outline,
-              color: AppColors.textLight,
-              size: 20.sp,
-            ),
+            prefixIcon: Icon(Icons.lock_outline,
+                color: AppColors.textLight, size: 20.sp),
             suffixIcon: IconButton(
               onPressed: onToggle,
               icon: Icon(
-                showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                showPassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 color: AppColors.textLight,
                 size: 20.sp,
               ),

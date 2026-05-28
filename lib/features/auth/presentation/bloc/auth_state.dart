@@ -11,9 +11,22 @@ class AuthInitial extends AuthState {
   const AuthInitial();
 }
 
-class AuthLoading extends AuthState {}
+class AuthLoading extends AuthState {
+  const AuthLoading();
+}
 
-class AuthLoaded extends AuthState {}
+class LoginSuccess extends AuthState {
+  final String email;
+  final String fullName;
+  const LoginSuccess({required this.email, required this.fullName});
+
+  @override
+  List<Object> get props => [email, fullName];
+}
+
+class RegisterSuccess extends AuthState {
+  const RegisterSuccess();
+}
 
 class AuthError extends AuthState {
   final String message;

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
-import '../../../core/utils/dummy_data.dart';
-import '../../history/models/detection_history_item.dart';
+import '../../detection/presentation/cubit/detection_cubit.dart';
+import '../../history/presentation/cubit/history_cubit.dart';
 import '../../history/views/history_screen.dart';
 import '../../profile/views/profile_screen.dart';
 import '../../reports/views/reports_screen.dart';
@@ -74,7 +75,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
 
     if (shouldExit == true && mounted) {
-      // ignore: use_build_context_synchronously
       Navigator.pop(context);
     }
   }
@@ -164,23 +164,11 @@ class _HomeContent extends StatefulWidget {
 class _HomeContentState extends State<_HomeContent> {
   final TextEditingController _urlController = TextEditingController();
 
-  final List<_RecentLinkItem> _recentLinks = DummyData.recentLinks
-      .map((e) => _RecentLinkItem(
-            url: e['url'] as String,
-            timeAgo: e['timeAgo'] as String,
-            isVideo: e['isVideo'] as bool,
-            status: (e['isFlagged'] as bool)
-                ? _LinkStatus.flagged
-                : _LinkStatus.safe,
-          ))
-      .toList();
-
-  List<DetectionHistoryItem> get _historyItems => DummyData.historyItems;
-
   @override
   void initState() {
     super.initState();
     _urlController.addListener(_onUrlChanged);
+    context.read<HistoryCubit>().loadHistory();
   }
 
   void _onUrlChanged() => setState(() {});
@@ -195,295 +183,334 @@ class _HomeContentState extends State<_HomeContent> {
   void _detectViolence() {
     final url = _urlController.text.trim();
     if (url.isEmpty) return;
-    Navigator.pushNamed(
-      context,
-      Routes.videoDetectionResult,
-      arguments: {
-        'videoPath': url,
-        'isViolent': false, // TODO: replace with real API result
-      },
-    );
+    context.read<DetectionCubit>().analyze(url);
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Image.asset(
-                'assets/images/app_logo.jpg',
-                width: 40.w,
-                height: 40.h,
-                fit: BoxFit.contain,
-                errorBuilder: (_, e, s) => Container(
+    return BlocListener<DetectionCubit, DetectionState>(
+      listener: (context, state) {
+        if (state is DetectionLoaded) {
+          final r = state.response;
+          Navigator.pushNamed(
+            context,
+            Routes.detectionDetails,
+            arguments: r.id,
+          );
+          _urlController.clear();
+          context.read<HistoryCubit>().loadHistory();
+        } else if (state is DetectionError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Image.asset(
+                  'assets/images/app_logo.jpg',
                   width: 40.w,
                   height: 40.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Icon(Icons.shield, color: Colors.white, size: 24.sp),
-                ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pushNamed(context, Routes.settings),
-                icon: Icon(
-                  Icons.settings_outlined,
-                  color: AppColors.primary,
-                  size: 28.sp,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20.h),
-          // Subtitle
-          Text(
-            'Paste a link to analyze text or video content for potential violence or harmful themes.',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14.sp,
-              height: 1.5,
-            ),
-          ),
-          SizedBox(height: 16.h),
-          // URL Input
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.link,
-                  color: AppColors.textSecondary,
-                  size: 20.sp,
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Theme(
-                    data: Theme.of(context).copyWith(
-                      inputDecorationTheme: const InputDecorationTheme(
-                        filled: false,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, e, s) => Container(
+                    width: 40.w,
+                    height: 40.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
-                    child: TextField(
-                      controller: _urlController,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      smartDashesType: SmartDashesType.disabled,
-                      smartQuotesType: SmartQuotesType.disabled,
-                      decoration: InputDecoration(
-                        hintText: 'Paste URL here...',
-                        hintStyle: TextStyle(
-                          color: AppColors.textLight,
-                          fontSize: 14.sp,
+                    child:
+                        Icon(Icons.shield, color: Colors.white, size: 24.sp),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, Routes.settings),
+                  icon: Icon(
+                    Icons.settings_outlined,
+                    color: AppColors.primary,
+                    size: 28.sp,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20.h),
+            Text(
+              'Paste a link to analyze text or video content for potential violence or harmful themes.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14.sp,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            // URL Input
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.link,
+                    color: AppColors.textSecondary,
+                    size: 20.sp,
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        inputDecorationTheme: const InputDecorationTheme(
+                          filled: false,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
                         ),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        filled: false,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
                       ),
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14.sp,
-                        decoration: TextDecoration.none,
-                        decorationColor: Colors.transparent,
+                      child: TextField(
+                        controller: _urlController,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        smartDashesType: SmartDashesType.disabled,
+                        smartQuotesType: SmartQuotesType.disabled,
+                        decoration: InputDecoration(
+                          hintText: 'Paste URL here...',
+                          hintStyle: TextStyle(
+                            color: AppColors.textLight,
+                            fontSize: 14.sp,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          filled: false,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14.sp,
+                          decoration: TextDecoration.none,
+                          decorationColor: Colors.transparent,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                if (_urlController.text.isNotEmpty)
-                  GestureDetector(
-                    onTap: () {
-                      _urlController.clear();
-                      setState(() {});
-                    },
-                    child: Icon(
-                      Icons.close,
-                      color: AppColors.textSecondary,
-                      size: 18.sp,
+                  if (_urlController.text.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        _urlController.clear();
+                        setState(() {});
+                      },
+                      child: Icon(
+                        Icons.close,
+                        color: AppColors.textSecondary,
+                        size: 18.sp,
+                      ),
                     ),
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(height: 12.h),
-          // Info Note
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: AppColors.primary,
-                size: 16.sp,
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  'Our AI will automatically detect whether the content is text or video and scan for safety violations.',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12.sp,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          // Detect Button
-          SizedBox(
-            width: double.infinity,
-            height: 52.h,
-            child: ElevatedButton(
-              onPressed: _urlController.text.trim().isNotEmpty
-                  ? _detectViolence
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.4),
-                foregroundColor: Colors.white,
-                disabledForegroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Detect Violence',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                ),
+                ],
               ),
             ),
-          ),
-          SizedBox(height: 32.h),
-          // Recent Links
-          Row(
-            children: [
-              Text(
-                'Recent Links',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Text(
-                  '${_recentLinks.length}',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          // Recent Links List
-          ...List.generate(_recentLinks.length, (i) {
-            final item = _recentLinks[i];
-            final historyItem = i < _historyItems.length ? _historyItems[i] : null;
-            return Padding(
-              padding: EdgeInsets.only(bottom: 10.h),
-              child: _RecentLinkCard(item: item, historyItem: historyItem),
-            );
-          }),
-          SizedBox(height: 12.h),
-          // Privacy Note
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
+            SizedBox(height: 12.h),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  Icons.shield_outlined,
-                  color: AppColors.textLight,
-                  size: 32.sp,
+                  Icons.info_outline,
+                  color: AppColors.primary,
+                  size: 16.sp,
                 ),
-                SizedBox(height: 8.h),
-                Text(
-                  'Your analysis history is encrypted and only\nvisible to you.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13.sp,
-                    height: 1.5,
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    'Our AI will automatically detect whether the content is text or video and scan for safety violations.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12.sp,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          SizedBox(height: 16.h),
-        ],
+            SizedBox(height: 16.h),
+            // Detect Button
+            BlocBuilder<DetectionCubit, DetectionState>(
+              builder: (context, state) {
+                final isLoading = state is DetectionLoading;
+                return SizedBox(
+                  width: double.infinity,
+                  height: 52.h,
+                  child: ElevatedButton(
+                    onPressed: _urlController.text.trim().isNotEmpty && !isLoading
+                        ? _detectViolence
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor:
+                          AppColors.primary.withValues(alpha: 0.4),
+                      foregroundColor: Colors.white,
+                      disabledForegroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.r),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: isLoading
+                        ? SizedBox(
+                            width: 22.w,
+                            height: 22.h,
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Text(
+                            'Detect Violence',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 32.h),
+            // Recent History from API
+            BlocBuilder<HistoryCubit, HistoryState>(
+              builder: (context, state) {
+                if (state is HistoryLoaded && state.items.isNotEmpty) {
+                  final recentItems = state.items.take(3).toList();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Recent Links',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8.w, vertical: 2.h),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                            child: Text(
+                              '${state.items.length}',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      ...recentItems.map((item) => Padding(
+                            padding: EdgeInsets.only(bottom: 10.h),
+                            child: _RecentLinkCard(
+                              domainName: item.domainName,
+                              contentType: item.contentType,
+                              relativeTime: item.relativeTime,
+                              safetyStatus: item.safetyStatus,
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                Routes.detectionDetails,
+                                arguments: item.id,
+                              ),
+                            ),
+                          )),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+            SizedBox(height: 12.h),
+            // Privacy Note
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.shield_outlined,
+                    color: AppColors.textLight,
+                    size: 32.sp,
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Your analysis history is encrypted and only\nvisible to you.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13.sp,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16.h),
+          ],
+        ),
       ),
     );
   }
 }
 
-enum _LinkStatus { safe, flagged }
-
-class _RecentLinkItem {
-  final String url;
-  final String timeAgo;
-  final bool isVideo;
-  final _LinkStatus status;
-
-  const _RecentLinkItem({
-    required this.url,
-    required this.timeAgo,
-    required this.isVideo,
-    required this.status,
-  });
-}
-
 class _RecentLinkCard extends StatelessWidget {
-  final _RecentLinkItem item;
-  final DetectionHistoryItem? historyItem;
+  final String domainName;
+  final String contentType;
+  final String relativeTime;
+  final String safetyStatus;
+  final VoidCallback onTap;
 
-  const _RecentLinkCard({required this.item, this.historyItem});
+  const _RecentLinkCard({
+    required this.domainName,
+    required this.contentType,
+    required this.relativeTime,
+    required this.safetyStatus,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isSafe = safetyStatus.toLowerCase() != 'flagged' &&
+        safetyStatus.toLowerCase() != 'violent';
+    final isVideo = contentType.toLowerCase().contains('video');
+
     return GestureDetector(
-      onTap: historyItem != null
-          ? () => Navigator.pushNamed(
-                context,
-                Routes.detectionDetails,
-                arguments: historyItem,
-              )
-          : null,
+      onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
@@ -493,7 +520,6 @@ class _RecentLinkCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon
             Container(
               width: 40.w,
               height: 40.h,
@@ -502,19 +528,20 @@ class _RecentLinkCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Icon(
-                item.isVideo ? Icons.play_circle_outline : Icons.description_outlined,
+                isVideo
+                    ? Icons.play_circle_outline
+                    : Icons.description_outlined,
                 color: AppColors.primary,
                 size: 20.sp,
               ),
             ),
             SizedBox(width: 12.w),
-            // URL + time
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.url,
+                    domainName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -533,7 +560,7 @@ class _RecentLinkCard extends StatelessWidget {
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        item.timeAgo,
+                        relativeTime,
                         style: TextStyle(
                           color: AppColors.textLight,
                           fontSize: 12.sp,
@@ -545,8 +572,36 @@ class _RecentLinkCard extends StatelessWidget {
               ),
             ),
             SizedBox(width: 8.w),
-            // Status badge
-            _StatusBadge(status: item.status),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: isSafe
+                    ? AppColors.success.withValues(alpha: 0.12)
+                    : AppColors.error.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isSafe
+                        ? Icons.check_circle_outline
+                        : Icons.warning_amber_rounded,
+                    color: isSafe ? AppColors.success : AppColors.error,
+                    size: 12.sp,
+                  ),
+                  SizedBox(width: 4.w),
+                  Text(
+                    safetyStatus,
+                    style: TextStyle(
+                      color: isSafe ? AppColors.success : AppColors.error,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             SizedBox(width: 4.w),
             Icon(
               Icons.chevron_right,
@@ -555,45 +610,6 @@ class _RecentLinkCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  final _LinkStatus status;
-
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final isSafe = status == _LinkStatus.safe;
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: isSafe
-            ? AppColors.success.withValues(alpha: 0.12)
-            : AppColors.error.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isSafe ? Icons.check_circle_outline : Icons.warning_amber_rounded,
-            color: isSafe ? AppColors.success : AppColors.error,
-            size: 12.sp,
-          ),
-          SizedBox(width: 4.w),
-          Text(
-            isSafe ? 'Safe' : 'Flagged',
-            style: TextStyle(
-              color: isSafe ? AppColors.success : AppColors.error,
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
       ),
     );
   }

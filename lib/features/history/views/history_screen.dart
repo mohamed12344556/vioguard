@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
-import '../../../core/utils/dummy_data.dart';
-import '../models/detection_history_item.dart';
+import '../presentation/cubit/history_cubit.dart';
+import '../data/models/history_item_model.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -16,24 +17,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int _selectedTabIndex = 0;
   final List<String> _tabs = ['All', 'Text', 'Video'];
 
-  final List<DetectionHistoryItem> _historyItems = DummyData.historyItems;
-
-  List<DetectionHistoryItem> get _filteredItems {
-    if (_selectedTabIndex == 0) return _historyItems;
-    if (_selectedTabIndex == 1) {
-      return _historyItems.where((item) => item.isText).toList();
-    }
-    return _historyItems.where((item) => item.isVideo).toList();
+  @override
+  void initState() {
+    super.initState();
+    context.read<HistoryCubit>().loadHistory();
   }
 
-  String _formatItemDate(DetectionHistoryItem item) {
-    final now = DateTime.now();
-    final diff = now.difference(item.dateTime);
-    if (diff.inMinutes < 60) return '${diff.inMinutes} mins ago';
-    if (diff.inHours < 24) return '${diff.inHours} hours ago';
-    if (diff.inDays == 1) return 'Yesterday';
-    // Otherwise show date
-    return '${item.dateTime.day}/${item.dateTime.month}/${item.dateTime.year}';
+  void _onTabChanged(int index) {
+    setState(() => _selectedTabIndex = index);
+    context.read<HistoryCubit>().loadHistory(type: _tabs[index]);
   }
 
   @override
@@ -41,7 +33,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Column(
       children: [
         SizedBox(height: 16.h),
-        // Title
         Text(
           'History',
           style: TextStyle(
@@ -65,13 +56,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 final isSelected = _selectedTabIndex == index;
                 return Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _selectedTabIndex = index),
+                    onTap: () => _onTabChanged(index),
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: 10.h),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary
-                            : Colors.transparent,
+                        color:
+                            isSelected ? AppColors.primary : Colors.transparent,
                         borderRadius: BorderRadius.circular(25.r),
                       ),
                       child: Text(
@@ -95,23 +85,67 @@ class _HistoryScreenState extends State<HistoryScreen> {
         SizedBox(height: 16.h),
         // List
         Expanded(
-          child: ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            itemCount: _filteredItems.length,
-            separatorBuilder: (context, i) => SizedBox(height: 10.h),
-            itemBuilder: (context, index) {
-              final item = _filteredItems[index];
-              return _HistoryItemCard(
-                item: item,
-                displayDate: _formatItemDate(item),
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    Routes.detectionDetails,
-                    arguments: item,
+          child: BlocBuilder<HistoryCubit, HistoryState>(
+            builder: (context, state) {
+              if (state is HistoryLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state is HistoryError) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        state.message,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14.sp,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 12.h),
+                      TextButton(
+                        onPressed: () => context
+                            .read<HistoryCubit>()
+                            .loadHistory(type: _tabs[_selectedTabIndex]),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              if (state is HistoryLoaded) {
+                if (state.items.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No history found',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14.sp,
+                      ),
+                    ),
                   );
-                },
-              );
+                }
+                return ListView.separated(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  itemCount: state.items.length,
+                  separatorBuilder: (context, i) => SizedBox(height: 10.h),
+                  itemBuilder: (context, index) {
+                    final item = state.items[index];
+                    return _HistoryItemCard(
+                      item: item,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          Routes.detectionDetails,
+                          arguments: item.id,
+                        );
+                      },
+                    );
+                  },
+                );
+              }
+              return const SizedBox.shrink();
             },
           ),
         ),
@@ -121,18 +155,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
 }
 
 class _HistoryItemCard extends StatelessWidget {
-  final DetectionHistoryItem item;
-  final String displayDate;
+  final HistoryItemModel item;
   final VoidCallback onTap;
 
   const _HistoryItemCard({
     required this.item,
-    required this.displayDate,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isViolent = item.safetyStatus.toLowerCase() == 'flagged' ||
+        item.safetyStatus.toLowerCase() == 'violent';
+    final isVideo = item.contentType.toLowerCase().contains('video');
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -144,7 +180,6 @@ class _HistoryItemCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon
             Container(
               width: 40.w,
               height: 40.h,
@@ -153,7 +188,7 @@ class _HistoryItemCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Icon(
-                item.isVideo
+                isVideo
                     ? Icons.play_circle_outline
                     : Icons.description_outlined,
                 color: AppColors.primary,
@@ -161,13 +196,12 @@ class _HistoryItemCard extends StatelessWidget {
               ),
             ),
             SizedBox(width: 12.w),
-            // URL + time
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.sourceUrl ?? (item.isVideo ? 'video_sample.mp4' : 'Text content'),
+                    item.domainName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -186,7 +220,7 @@ class _HistoryItemCard extends StatelessWidget {
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        displayDate,
+                        item.relativeTime,
                         style: TextStyle(
                           color: AppColors.textLight,
                           fontSize: 12.sp,
@@ -198,8 +232,7 @@ class _HistoryItemCard extends StatelessWidget {
               ),
             ),
             SizedBox(width: 8.w),
-            // Status badge
-            _StatusBadge(isViolent: item.isViolent),
+            _StatusBadge(isViolent: isViolent, label: item.safetyStatus),
             SizedBox(width: 4.w),
             Icon(
               Icons.chevron_right,
@@ -215,8 +248,9 @@ class _HistoryItemCard extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final bool isViolent;
+  final String label;
 
-  const _StatusBadge({required this.isViolent});
+  const _StatusBadge({required this.isViolent, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +274,7 @@ class _StatusBadge extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Text(
-            isViolent ? 'Flagged' : 'Safe',
+            label,
             style: TextStyle(
               color: isViolent ? AppColors.error : AppColors.success,
               fontSize: 11.sp,

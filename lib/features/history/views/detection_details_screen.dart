@@ -1,540 +1,423 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
-import '../models/detection_history_item.dart';
+import '../../../core/di/injection_container.dart';
+import '../presentation/cubit/history_cubit.dart';
+import '../data/models/history_details_model.dart';
 
 class DetectionDetailsScreen extends StatelessWidget {
-  final DetectionHistoryItem item;
+  final String historyId;
 
-  const DetectionDetailsScreen({
-    super.key,
-    required this.item,
-  });
+  const DetectionDetailsScreen({super.key, required this.historyId});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
+    return BlocProvider(
+      create: (_) => sl<HistoryDetailsCubit>()..loadDetails(historyId),
+      child: Scaffold(
         backgroundColor: AppColors.surface,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
-            size: 20.sp,
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: AppColors.textPrimary,
+              size: 20.sp,
+            ),
+          ),
+          centerTitle: true,
+          title: Text(
+            'Detection Details',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-        centerTitle: true,
-        title: Text(
-          'Detection Details',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // METADATA section
-            _SectionLabel(label: 'METADATA'),
-            SizedBox(height: 10.h),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  // DATE
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          color: AppColors.textSecondary,
-                          size: 16.sp,
-                        ),
-                        SizedBox(width: 8.w),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'DATE',
-                              style: TextStyle(
-                                color: AppColors.textLight,
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            SizedBox(height: 3.h),
-                            Text(
-                              item.formattedDate,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+        body: BlocBuilder<HistoryDetailsCubit, HistoryDetailsState>(
+          builder: (context, state) {
+            if (state is HistoryDetailsLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state is HistoryDetailsError) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      state.message,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14.sp,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 36.h,
-                    color: AppColors.border,
-                  ),
-                  SizedBox(width: 16.w),
-                  // TIME
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          color: AppColors.textSecondary,
-                          size: 16.sp,
-                        ),
-                        SizedBox(width: 8.w),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'TIME',
-                              style: TextStyle(
-                                color: AppColors.textLight,
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            SizedBox(height: 3.h),
-                            Text(
-                              item.formattedTime,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                    SizedBox(height: 12.h),
+                    TextButton(
+                      onPressed: () => context
+                          .read<HistoryDetailsCubit>()
+                          .loadDetails(historyId),
+                      child: const Text('Retry'),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20.h),
-
-            // SOURCE INVESTIGATION section
-            _SectionLabel(label: 'SOURCE INVESTIGATION'),
-            SizedBox(height: 10.h),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Content Type row
-                  Row(
-                    children: [
-                      Container(
-                        width: 36.w,
-                        height: 36.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Icon(
-                          item.isVideo
-                              ? Icons.videocam_outlined
-                              : Icons.description_outlined,
-                          color: AppColors.primary,
-                          size: 18.sp,
-                        ),
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Content Type',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12.sp,
-                              ),
-                            ),
-                            Text(
-                              item.isVideo ? 'Video Stream (MP4)' : 'Text',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Verified badge
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: AppColors.success,
-                            size: 14.sp,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            'Verified',
-                            style: TextStyle(
-                              color: AppColors.success,
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-                  // URL row
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.language,
-                        color: AppColors.primary,
-                        size: 14.sp,
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Text(
-                          item.sourceUrl ?? 'https://storage.cdn.media/v/4921-prod-high',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 13.sp,
-                            decoration: TextDecoration.underline,
-                            decorationColor: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20.h),
-
-            // CURRENT STATUS section
-            _SectionLabel(label: 'CURRENT STATUS'),
-            SizedBox(height: 10.h),
-            _buildStatusBadge(),
-            SizedBox(height: 20.h),
-
-            // Confidence (violent video only)
-            if (item.isVideo && item.isViolent && item.confidenceScore != null) ...[
-              _SectionLabel(label: 'DETECTION CONFIDENCE', trailing: '${item.confidenceScore}%', trailingColor: AppColors.error),
-              SizedBox(height: 10.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6.r),
-                child: LinearProgressIndicator(
-                  value: item.confidenceScore! / 100,
-                  backgroundColor: AppColors.border,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.error),
-                  minHeight: 10.h,
+                  ],
                 ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'The AI model has high certainty regarding this classification based on visual and audio forensic analysis.',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12.sp,
-                  height: 1.4,
-                ),
-              ),
-              SizedBox(height: 20.h),
-            ],
-
-            // ANALYSIS SUMMARY section
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ANALYSIS SUMMARY',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                  SizedBox(height: 14.h),
-                  ..._buildSummaryBullets(),
-                ],
-              ),
-            ),
-            SizedBox(height: 24.h),
-
-            // View Source Content Button
-            SizedBox(
-              width: double.infinity,
-              height: 52.h,
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.open_in_new, size: 18.sp),
-                label: Text(
-                  'View Source Content',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.r),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-
-            // Share + Delete buttons row
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 48.h,
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.share_outlined, size: 18.sp),
-                      label: Text(
-                        'Share Report',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: SizedBox(
-                    height: 48.h,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showDeleteDialog(context),
-                      icon: Icon(Icons.delete_outline, size: 18.sp, color: AppColors.error),
-                      label: Text(
-                        'Delete Report',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.error,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 20.h),
-          ],
+              );
+            }
+            if (state is HistoryDetailsLoaded) {
+              return _DetailsContent(
+                details: state.details,
+                historyId: historyId,
+              );
+            }
+            return const SizedBox.shrink();
+          },
         ),
       ),
     );
   }
+}
 
-  Widget _buildStatusBadge() {
-    final Color badgeColor;
-    final IconData badgeIcon;
-    final String badgeText;
+class _DetailsContent extends StatelessWidget {
+  final HistoryDetailsModel details;
+  final String historyId;
 
-    if (item.isViolent) {
-      badgeColor = AppColors.error;
-      badgeIcon = Icons.warning_rounded;
-      badgeText = 'Violent Content';
-    } else if (item.result == DetectionResult.againstViolent) {
-      badgeColor = AppColors.success;
-      badgeIcon = Icons.shield;
-      badgeText = 'Against Violent Content';
-    } else if (item.result == DetectionResult.neutral) {
-      badgeColor = AppColors.primary;
-      badgeIcon = Icons.info_outline;
-      badgeText = 'Neutral Content';
-    } else {
-      badgeColor = AppColors.success;
-      badgeIcon = Icons.shield;
-      badgeText = 'Non-Violent Content';
+  const _DetailsContent({required this.details, required this.historyId});
+
+  Color _parseStatusColor() {
+    final hex = details.statusBadgeColor.replaceAll('#', '');
+    if (hex.length == 6) {
+      return Color(int.parse('FF$hex', radix: 16));
     }
+    if (details.currentStatus.toLowerCase().contains('violent')) {
+      return AppColors.error;
+    }
+    return AppColors.success;
+  }
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: badgeColor,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _parseStatusColor();
+    final isVideo = details.contentType.toLowerCase().contains('video');
+    final formattedDate =
+        '${_monthName(details.scannedAt.month)} ${details.scannedAt.day}, ${details.scannedAt.year}';
+    final hour = details.scannedAt.hour;
+    final minute = details.scannedAt.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    final formattedTime = '$displayHour:$minute $period';
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(badgeIcon, color: Colors.white, size: 16.sp),
-          SizedBox(width: 6.w),
-          Text(
-            badgeText,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w600,
+          // METADATA
+          _SectionLabel(label: 'METADATA'),
+          SizedBox(height: 10.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          color: AppColors.textSecondary, size: 16.sp),
+                      SizedBox(width: 8.w),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('DATE',
+                              style: TextStyle(
+                                  color: AppColors.textLight,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5)),
+                          SizedBox(height: 3.h),
+                          Text(formattedDate,
+                              style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(width: 1, height: 36.h, color: AppColors.border),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.access_time,
+                          color: AppColors.textSecondary, size: 16.sp),
+                      SizedBox(width: 8.w),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('TIME',
+                              style: TextStyle(
+                                  color: AppColors.textLight,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5)),
+                          SizedBox(height: 3.h),
+                          Text(formattedTime,
+                              style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+          SizedBox(height: 20.h),
+
+          // SOURCE INVESTIGATION
+          _SectionLabel(label: 'SOURCE INVESTIGATION'),
+          SizedBox(height: 10.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36.w,
+                      height: 36.h,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Icon(
+                        isVideo
+                            ? Icons.videocam_outlined
+                            : Icons.description_outlined,
+                        color: AppColors.primary,
+                        size: 18.sp,
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Content Type',
+                              style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12.sp)),
+                          Text(details.contentType,
+                              style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                    if (details.isVerified)
+                      Row(
+                        children: [
+                          Icon(Icons.check_circle,
+                              color: AppColors.success, size: 14.sp),
+                          SizedBox(width: 4.w),
+                          Text('Verified',
+                              style: TextStyle(
+                                  color: AppColors.success,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Icon(Icons.language, color: AppColors.primary, size: 14.sp),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        details.sourceUrl,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 13.sp,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+
+          // CURRENT STATUS
+          _SectionLabel(label: 'CURRENT STATUS'),
+          SizedBox(height: 10.h),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: statusColor,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  statusColor == AppColors.error
+                      ? Icons.warning_rounded
+                      : Icons.shield,
+                  color: Colors.white,
+                  size: 16.sp,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  details.currentStatus,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+
+          // ANALYSIS SUMMARY
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ANALYSIS SUMMARY',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                SizedBox(height: 14.h),
+                ...details.analysisSummary.map((item) => Padding(
+                      padding: EdgeInsets.only(bottom: 12.h),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(top: 5.h),
+                            child: Container(
+                              width: 7.w,
+                              height: 7.h,
+                              decoration: BoxDecoration(
+                                color: item.isViolentFlag
+                                    ? AppColors.error
+                                    : AppColors.success,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Text(
+                              item.description,
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 14.sp,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              ],
+            ),
+          ),
+          SizedBox(height: 24.h),
+
+          // Delete button
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48.h,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showDeleteDialog(context),
+                    icon: Icon(Icons.delete_outline,
+                        size: 18.sp, color: AppColors.error),
+                    label: Text(
+                      'Delete Report',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.error,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20.h),
         ],
       ),
     );
   }
 
-  List<Widget> _buildSummaryBullets() {
-    List<String> bullets;
-    Color dotColor;
-
-    if (item.flagReasons != null && item.flagReasons!.isNotEmpty) {
-      bullets = item.flagReasons!;
-      dotColor = item.isViolent ? AppColors.error : AppColors.success;
-    } else if (item.isViolent) {
-      dotColor = AppColors.error;
-      if (item.isVideo) {
-        bullets = [
-          'Identified high-impact physical actions in the video.',
-          'Detected rapid and forceful movements consistent with aggression.',
-          'Presence of aggressive postures and gestures between individuals.',
-        ];
-      } else {
-        bullets = [
-          'Aggressive tone detected in middle paragraph',
-          'Harmful intent identified against specific groups',
-          'Threatening language found in closing statements',
-        ];
-      }
-    } else if (item.result == DetectionResult.againstViolent) {
-      dotColor = AppColors.success;
-      bullets = [
-        'Encourages safety and peace as a priority',
-        'Anti-violence message detected in primary phrasing',
-        'Positive intent identified throughout the context',
-      ];
-    } else if (item.result == DetectionResult.neutral) {
-      dotColor = AppColors.primary;
-      bullets = [
-        'Informational and academic tone throughout the provided segment.',
-        'No aggressive or inflammatory language detected in the context.',
-        'No harmful intent or prohibited keywords identified by the engine.',
-      ];
-    } else {
-      dotColor = AppColors.success;
-      if (item.isVideo) {
-        bullets = [
-          'No harmful actions detected',
-          'Content is safe and compliant',
-          'Normal behavioral patterns',
-        ];
-      } else {
-        bullets = [
-          'No aggressive tone detected in the content.',
-          'Informational or neutral language used throughout.',
-          'No harmful intent identified.',
-        ];
-      }
-    }
-
-    return bullets.map((b) {
-      return Padding(
-        padding: EdgeInsets.only(bottom: 12.h),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(top: 5.h),
-              child: Container(
-                width: 7.w,
-                height: 7.h,
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Text(
-                b,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14.sp,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }).toList();
-  }
-
   void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Report'),
         content: const Text('Are you sure you want to delete this report?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
+              context.read<HistoryDetailsCubit>();
+              // Use the parent history cubit to delete & go back
               Navigator.pop(context);
             },
             child: Text('Delete', style: TextStyle(color: AppColors.error)),
@@ -543,43 +426,31 @@ class DetectionDetailsScreen extends StatelessWidget {
       ),
     );
   }
+
+  String _monthName(int month) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return months[month - 1];
+  }
 }
 
 class _SectionLabel extends StatelessWidget {
   final String label;
-  final String? trailing;
-  final Color? trailingColor;
 
-  const _SectionLabel({
-    required this.label,
-    this.trailing,
-    this.trailingColor,
-  });
+  const _SectionLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-          ),
-        ),
-        if (trailing != null)
-          Text(
-            trailing!,
-            style: TextStyle(
-              color: trailingColor ?? AppColors.textPrimary,
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-      ],
+    return Text(
+      label,
+      style: TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 11.sp,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.6,
+      ),
     );
   }
 }

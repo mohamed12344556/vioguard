@@ -1,16 +1,27 @@
-/// API Endpoint Strings
 class ServerStrings {
   ServerStrings._();
 
-  // Authentication Endpoints
-  static const String login = '/auth/login';
-  static const String register = '/auth/register';
-  static const String logout = '/auth/logout';
-  static const String refreshToken = '/auth/refresh';
+  // Auth
+  static const String login = '/api/auth/login';
+  static const String register = '/api/auth/register';
 
-  // User Endpoints
-  static const String profile = '/user/profile';
-  static const String updateProfile = '/user/update';
+  // Detection
+  static const String analyze = '/api/Detection/analyze';
 
-  // Add your custom endpoints here
+  // History
+  static const String history = '/api/History';
+  static String historyDetails(String id) => '/api/History/$id/details';
+  static String deleteHistory(String id) => '/api/History/$id';
+
+  // Reports
+  static const String monthlyDashboard = '/api/Reports/monthly-dashboard';
+  static const String reportSettings = '/api/Reports/settings';
+
+  // Users
+  static String userProfile(String email) => '/api/users/$email';
+  static String updateProfile(String email) => '/api/users/$email/profile';
+  static String updatePreferences(String email) =>
+      '/api/users/$email/preferences';
+  static String changePassword(String email) =>
+      '/api/users/$email/change-password';
 }
