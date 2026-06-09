@@ -38,6 +38,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
             Routes.textDetectionResult,
             arguments: {
               'text': _textController.text,
+              'cleanedText': state.response.cleanedText,
               'isViolent': state.response.isViolent,
             },
           );

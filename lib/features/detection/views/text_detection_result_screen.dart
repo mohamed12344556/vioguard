@@ -5,12 +5,14 @@ import '../../../core/routes/routes.dart';
 
 class TextDetectionResultScreen extends StatelessWidget {
   final String analyzedText;
+  final String? cleanedText;
   final bool isViolent;
   final List<String>? highlightedWords;
 
   const TextDetectionResultScreen({
     super.key,
     required this.analyzedText,
+    this.cleanedText,
     required this.isViolent,
     this.highlightedWords,
   });
@@ -92,6 +94,54 @@ class TextDetectionResultScreen extends StatelessWidget {
                 ],
               ),
             ),
+            // Processed (cleaned) text card — what the model actually analyzed
+            if (cleanedText != null &&
+                cleanedText!.trim().isNotEmpty &&
+                cleanedText!.trim() != analyzedText.trim()) ...[
+              SizedBox(height: 12.h),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.auto_fix_high,
+                          color: AppColors.textSecondary,
+                          size: 18.sp,
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          'PROCESSED TEXT',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
+                    Text(
+                      cleanedText!.trim(),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14.sp,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             SizedBox(height: 20.h),
             // Result Card
             Container(

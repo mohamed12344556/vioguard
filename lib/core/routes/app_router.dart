@@ -38,6 +38,7 @@ class AppRouter {
         return _buildRoute(
           TextDetectionResultScreen(
             analyzedText: args?['text'] ?? '',
+            cleanedText: args?['cleanedText'] as String?,
             isViolent: args?['isViolent'] ?? false,
             highlightedWords: args?['highlightedWords'] as List<String>?,
           ),

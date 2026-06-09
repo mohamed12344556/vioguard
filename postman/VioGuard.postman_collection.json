@@ -1,0 +1,427 @@
+{
+  "info": {
+    "_postman_id": "b1f9a2c4-7d3e-4a6b-9c12-vioguard0001",
+    "name": "VioGuard API",
+    "description": "Complete API collection for the VioGuard app.\n\nCovers three services:\n1. **Backend** (.NET) — auth, content, detection, history, reports, users\n2. **Sentiment AI** — text violence classification (FastAPI)\n3. **Video AI** — video violence detection\n\n## Setup\nUse the **VioGuard – Local** environment (or set the collection variables):\n- `baseUrl` — backend base URL\n- `sentimentUrl` — sentiment model base URL\n- `videoUrl` — video model base URL\n- `userEmail` — logged-in user's email\n- `token` — auto-populated after a successful login\n\n## Notes\n- ngrok endpoints send `ngrok-skip-browser-warning: true` automatically (collection-level header script).\n- The **Login** request saves the returned `token` into the `token` variable.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Test User\",\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"P@ssw0rd123\",\n  \"confirmPassword\": \"P@ssw0rd123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "Create a new user account."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Save the auth token + email for subsequent requests.",
+                  "if (pm.response.code === 200) {",
+                  "    try {",
+                  "        var json = pm.response.json();",
+                  "        if (json.token) { pm.collectionVariables.set('token', json.token); }",
+                  "        if (json.email) { pm.collectionVariables.set('userEmail', json.email); }",
+                  "        pm.test('token saved', function () { pm.expect(json.token).to.be.a('string'); });",
+                  "    } catch (e) { console.log('Login response was not JSON', e); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"P@ssw0rd123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Authenticate. On success the `token` collection variable is set automatically."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Detection",
+      "item": [
+        {
+          "name": "Analyze URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/some-article\",\n  \"userEmail\": \"{{userEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Detection/analyze",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Detection", "analyze"]
+            },
+            "description": "Analyze a URL for violent content. Returns a DetectionResponseDto."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Content",
+      "item": [
+        {
+          "name": "Get Content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Content?userEmail={{userEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Content"],
+              "query": [
+                { "key": "userEmail", "value": "{{userEmail}}" }
+              ]
+            },
+            "description": "List the user's analyzed content."
+          }
+        },
+        {
+          "name": "Create Text Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": null,\n  \"userEmail\": \"{{userEmail}}\",\n  \"textContext\": \"I will kill you and destroy everything\",\n  \"violentWords\": [\"kill\", \"destroy\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Content/text",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Content", "text"]
+            },
+            "description": "Persist a text-analysis result. Returns TextContentDto."
+          }
+        },
+        {
+          "name": "Create Video Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": null,\n  \"userEmail\": \"{{userEmail}}\",\n  \"violentPercent\": 99.96\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Content/video",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Content", "video"]
+            },
+            "description": "Persist a video-analysis result. Returns VideoContentDto."
+          }
+        },
+        {
+          "name": "Upload Video",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "Video",
+                  "type": "file",
+                  "src": [],
+                  "description": "Video file to upload (binary)."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Content/upload-video",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Content", "upload-video"]
+            },
+            "description": "Upload a video file. Returns VideoBinaryDto. Select a file in the 'Video' form-data field before sending."
+          }
+        }
+      ]
+    },
+    {
+      "name": "History",
+      "item": [
+        {
+          "name": "Get History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/History?type=All&userEmail={{userEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "History"],
+              "query": [
+                { "key": "type", "value": "All", "description": "All | Text | Video" },
+                { "key": "userEmail", "value": "{{userEmail}}" }
+              ]
+            },
+            "description": "List the user's detection history. `type` filter: All, Text, or Video."
+          }
+        },
+        {
+          "name": "Get History Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/History/{{historyId}}/details",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "History", "{{historyId}}", "details"]
+            },
+            "description": "Get full details for a single history entry. Set `historyId` first."
+          }
+        },
+        {
+          "name": "Delete History",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/History/{{historyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "History", "{{historyId}}"]
+            },
+            "description": "Delete a single history entry by id."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Monthly Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Reports/monthly-dashboard?userEmail={{userEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Reports", "monthly-dashboard"],
+              "query": [
+                { "key": "userEmail", "value": "{{userEmail}}" }
+              ]
+            },
+            "description": "Monthly report dashboard summary for the user."
+          }
+        },
+        {
+          "name": "Update Report Settings",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enableMonthlyReports\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Reports/settings?userEmail={{userEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Reports", "settings"],
+              "query": [
+                { "key": "userEmail", "value": "{{userEmail}}" }
+              ]
+            },
+            "description": "Enable/disable monthly reports for the user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userEmail}}"]
+            },
+            "description": "Get a user by email."
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Updated Name\",\n  \"email\": \"{{userEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userEmail}}/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userEmail}}", "profile"]
+            },
+            "description": "Update the user's profile (full name / email)."
+          }
+        },
+        {
+          "name": "Update Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isDarkMode\": true,\n  \"isMonthlyReportEnabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userEmail}}/preferences",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userEmail}}", "preferences"]
+            },
+            "description": "Update the user's preferences (dark mode / monthly reports)."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"P@ssw0rd123\",\n  \"newPassword\": \"N3wP@ssw0rd\",\n  \"confirmPassword\": \"N3wP@ssw0rd\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userEmail}}/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userEmail}}", "change-password"]
+            },
+            "description": "Change the user's password."
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Models",
+      "description": "Standalone AI model services (not part of the .NET backend).",
+      "item": [
+        {
+          "name": "Sentiment – Analyze Text",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"I will kill you and destroy everything\"\n}"
+            },
+            "url": {
+              "raw": "{{sentimentUrl}}/sentiment",
+              "host": ["{{sentimentUrl}}"],
+              "path": ["sentiment"]
+            },
+            "description": "Classify text for violence.\n\nResponse:\n```json\n{\n  \"TEXT\": \"...\",\n  \"Cleand_Text\": \"...\",\n  \"Sentiment_Label\": \"0\"\n}\n```\n`Sentiment_Label`: \"1\" = violent, \"0\" = safe/neutral. English only."
+          }
+        },
+        {
+          "name": "Video – Predict",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Video file (e.g. .avi/.mp4) to classify."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{videoUrl}}/predict",
+              "host": ["{{videoUrl}}"],
+              "path": ["predict"]
+            },
+            "description": "Classify a video for violence.\n\nResponse:\n```json\n{\n  \"label\": \"Violence\",\n  \"confidence\": 99.96,\n  \"violence\": 99.96,\n  \"non_violence\": 0.04\n}\n```\nSelect a video in the 'file' form-data field before sending."
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Send the ngrok bypass header on every request to ngrok hosts,",
+          "// otherwise ngrok's free tier returns an HTML warning page.",
+          "var url = pm.request.url.toString();",
+          "if (url.indexOf('ngrok-free.dev') !== -1 || url.indexOf('ngrok.io') !== -1) {",
+          "    pm.request.headers.upsert({ key: 'ngrok-skip-browser-warning', value: 'true' });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://refold-ideology-elbow.ngrok-free.dev", "type": "string" },
+    { "key": "sentimentUrl", "value": "https://web-production-d5338.up.railway.app", "type": "string" },
+    { "key": "videoUrl", "value": "https://rod-streptococcal-hyperphysically.ngrok-free.dev", "type": "string" },
+    { "key": "userEmail", "value": "test@test.com", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "historyId", "value": "", "type": "string" }
+  ]
+}
