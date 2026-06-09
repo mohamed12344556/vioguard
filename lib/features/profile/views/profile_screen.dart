@@ -104,6 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 160.w,
                         child: OutlinedButton.icon(
                           onPressed: () async {
+                            final profileCubit = context.read<ProfileCubit>();
                             final result = await Navigator.pushNamed(
                               context,
                               Routes.editProfile,
@@ -112,7 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             if (result is String && result.isNotEmpty) {
                               setState(() => _imagePath = result);
                             }
-                            context.read<ProfileCubit>().loadProfile();
+                            profileCubit.loadProfile();
                           },
                           icon: Icon(Icons.edit_outlined, size: 16.sp),
                           label: Text(

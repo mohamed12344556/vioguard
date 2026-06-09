@@ -10,7 +10,15 @@ class AppConfig {
 
   static String get baseUrl {
     return isProduction
-        ? 'https://vioguard-api.runasp.net'
-        : 'https://vioguard-api.runasp.net';
+        ? 'https://refold-ideology-elbow.ngrok-free.dev'
+        : 'https://refold-ideology-elbow.ngrok-free.dev';
   }
+
+  /// Sentiment / text-analysis AI model (separate FastAPI service)
+  static const String sentimentBaseUrl =
+      'https://web-production-d5338.up.railway.app';
+
+  /// Video violence-detection AI model (separate service).
+  static const String videoModelBaseUrl =
+      'https://rod-streptococcal-hyperphysically.ngrok-free.dev';
 }

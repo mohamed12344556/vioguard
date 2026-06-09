@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
+import '../presentation/cubit/text_prediction_cubit.dart';
 
 class TextDetectionScreen extends StatefulWidget {
   const TextDetectionScreen({super.key});
@@ -12,57 +14,43 @@ class TextDetectionScreen extends StatefulWidget {
 
 class _TextDetectionScreenState extends State<TextDetectionScreen> {
   final TextEditingController _textController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
+    context.read<TextPredictionCubit>().reset();
     _textController.dispose();
     super.dispose();
   }
 
   void _detectViolence() {
-    if (_textController.text.trim().isEmpty) return;
-
-    setState(() => _isLoading = true);
-
-    // Simulate API call
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      // Navigate to result screen with the text
-      Navigator.pushNamed(
-        context,
-        Routes.textDetectionResult,
-        arguments: {
-          'text': _textController.text,
-          // For demo: detect "violent" keywords
-          'isViolent': _containsViolentKeywords(_textController.text),
-        },
-      );
-    });
-  }
-
-  bool _containsViolentKeywords(String text) {
-    final violentKeywords = [
-      'kill',
-      'crush',
-      'destroy',
-      'threat',
-      'attack',
-      'hurt',
-      'enemies',
-      'revenge',
-      'regret',
-      'pay',
-    ];
-    final lowerText = text.toLowerCase();
-    return violentKeywords.any((keyword) => lowerText.contains(keyword));
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
+    context.read<TextPredictionCubit>().predict(text);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<TextPredictionCubit, TextPredictionState>(
+      listener: (context, state) {
+        if (state is TextPredictionLoaded) {
+          Navigator.pushNamed(
+            context,
+            Routes.textDetectionResult,
+            arguments: {
+              'text': _textController.text,
+              'isViolent': state.response.isViolent,
+            },
+          );
+        } else if (state is TextPredictionError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
@@ -175,41 +163,50 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
             ),
             const Spacer(),
             // Detect Button
-            SizedBox(
-              width: double.infinity,
-              height: 52.h,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _detectViolence,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                        width: 24.w,
-                        height: 24.h,
-                        child: const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : Text(
-                        'Detect Violence',
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
+            BlocBuilder<TextPredictionCubit, TextPredictionState>(
+              builder: (context, state) {
+                final isLoading = state is TextPredictionLoading;
+                return SizedBox(
+                  width: double.infinity,
+                  height: 52.h,
+                  child: ElevatedButton(
+                    onPressed: isLoading ? null : _detectViolence,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor:
+                          AppColors.primary.withValues(alpha: 0.4),
+                      foregroundColor: Colors.white,
+                      disabledForegroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
-              ),
+                      elevation: 0,
+                    ),
+                    child: isLoading
+                        ? SizedBox(
+                            width: 24.w,
+                            height: 24.h,
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Text(
+                            'Detect Violence',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                );
+              },
             ),
             SizedBox(height: 16.h),
           ],
         ),
       ),
+    ),
     );
   }
 }

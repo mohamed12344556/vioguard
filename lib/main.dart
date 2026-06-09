@@ -16,6 +16,7 @@ import 'features/history/presentation/cubit/history_cubit.dart';
 import 'features/reports/presentation/cubit/reports_cubit.dart';
 import 'features/profile/presentation/cubit/profile_cubit.dart';
 import 'features/detection/presentation/cubit/video_prediction_cubit.dart';
+import 'features/detection/presentation/cubit/text_prediction_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,6 +62,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => sl<ReportsCubit>()),
         BlocProvider(create: (_) => sl<ProfileCubit>()),
         BlocProvider(create: (_) => sl<VideoPredictionCubit>()),
+        BlocProvider(create: (_) => sl<TextPredictionCubit>()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),

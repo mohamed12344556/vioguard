@@ -17,9 +17,11 @@ import '../../features/auth/presentation/bloc/auth_cubit.dart';
 
 import '../../features/detection/data/datasources/detection_remote_datasource.dart';
 import '../../features/detection/data/datasources/video_prediction_datasource.dart';
+import '../../features/detection/data/datasources/text_prediction_datasource.dart';
 import '../../features/detection/data/repositories/detection_repository.dart';
 import '../../features/detection/presentation/cubit/detection_cubit.dart';
 import '../../features/detection/presentation/cubit/video_prediction_cubit.dart';
+import '../../features/detection/presentation/cubit/text_prediction_cubit.dart';
 
 import '../../features/history/data/datasources/history_remote_datasource.dart';
 import '../../features/history/data/repositories/history_repository.dart';
@@ -59,7 +61,10 @@ Future<void> init() async {
     );
 
     dio.interceptors.add(
-      AuthInterceptor(getToken: () async => sl<TokenStorage>().getToken()),
+      AuthInterceptor(
+        getToken: () async => sl<TokenStorage>().getToken(),
+        getEmail: () => sl<TokenStorage>().getUserEmail(),
+      ),
     );
     dio.interceptors.add(ApiInterceptor());
 
@@ -106,6 +111,14 @@ Future<void> init() async {
   );
   sl.registerFactory(
     () => VideoPredictionCubit(dataSource: sl()),
+  );
+
+  //! Text Prediction (Sentiment AI Model + backend persistence)
+  sl.registerLazySingleton<TextPredictionDataSource>(
+    () => TextPredictionDataSourceImpl(dio: Dio(), api: sl()),
+  );
+  sl.registerFactory(
+    () => TextPredictionCubit(dataSource: sl(), tokenStorage: sl()),
   );
 
   //! History

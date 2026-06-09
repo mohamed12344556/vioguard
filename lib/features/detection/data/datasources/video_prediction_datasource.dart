@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/config/app_config.dart';
 import '../models/video_prediction_response.dart';
 
 abstract class VideoPredictionDataSource {
@@ -7,8 +8,7 @@ abstract class VideoPredictionDataSource {
 
 class VideoPredictionDataSourceImpl implements VideoPredictionDataSource {
   final Dio dio;
-  static const String _baseUrl =
-      'https://rod-streptococcal-hyperphysically.ngrok-free.dev';
+  static const String _baseUrl = AppConfig.videoModelBaseUrl;
 
   VideoPredictionDataSourceImpl({required this.dio});
 
@@ -26,6 +26,7 @@ class VideoPredictionDataSourceImpl implements VideoPredictionDataSource {
         headers: {
           'accept': 'application/json',
           'Content-Type': 'multipart/form-data',
+          'ngrok-skip-browser-warning': 'true',
         },
         receiveTimeout: const Duration(minutes: 2),
         sendTimeout: const Duration(minutes: 2),

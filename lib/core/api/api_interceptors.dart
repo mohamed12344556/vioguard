@@ -46,11 +46,14 @@ class ApiInterceptor extends Interceptor {
 }
 
 /// Authentication Interceptor
-/// Automatically adds authentication token to requests
+/// Automatically adds the auth token, and injects the logged-in user's
+/// email as a `userEmail` query parameter for backend endpoints that
+/// expect it (History, Reports, Content) when not already supplied.
 class AuthInterceptor extends Interceptor {
   final Future<String?> Function() getToken;
+  final String? Function()? getEmail;
 
-  AuthInterceptor({required this.getToken});
+  AuthInterceptor({required this.getToken, this.getEmail});
 
   @override
   void onRequest(
@@ -61,6 +64,18 @@ class AuthInterceptor extends Interceptor {
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
+
+    // ngrok free tier returns an interstitial HTML page unless this header
+    // is present; it ensures the real JSON API response is served.
+    options.headers['ngrok-skip-browser-warning'] = 'true';
+
+    final email = getEmail?.call();
+    if (email != null &&
+        email.isNotEmpty &&
+        !options.queryParameters.containsKey('userEmail')) {
+      options.queryParameters['userEmail'] = email;
+    }
+
     super.onRequest(options, handler);
   }
 }

@@ -8,6 +8,12 @@ class ServerStrings {
   // Detection
   static const String analyze = '/api/Detection/analyze';
 
+  // Content (persistence of analysis results)
+  static const String content = '/api/Content';
+  static const String textContent = '/api/Content/text';
+  static const String videoContent = '/api/Content/video';
+  static const String uploadVideo = '/api/Content/upload-video';
+
   // History
   static const String history = '/api/History';
   static String historyDetails(String id) => '/api/History/$id/details';
