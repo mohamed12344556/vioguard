@@ -33,7 +33,8 @@ class VideoPredictionCubit extends Cubit<VideoPredictionState> {
         }
         await dataSource.saveVideoContent(
           userEmail: email,
-          violentPercent: response.violence,
+          // `violence` is a 0–1 fraction; the backend expects a percentage.
+          violentPercent: response.violence * 100,
         );
       }
 
