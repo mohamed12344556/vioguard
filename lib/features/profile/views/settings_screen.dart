@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/routes/routes.dart';
+import '../presentation/cubit/profile_cubit.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,8 +18,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
 
   @override
+  void initState() {
+    super.initState();
+    context.read<ProfileCubit>().loadProfile();
+  }
+
+  /// Persists the dark-mode / monthly-report preferences to the backend.
+  /// [_notificationsEnabled] maps to the backend's `isMonthlyReportEnabled`.
+  void _savePreferences() {
+    context.read<ProfileCubit>().updatePreferences(
+          isDarkMode: _darkModeEnabled,
+          isMonthlyReportEnabled: _notificationsEnabled,
+        );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<ProfileCubit, ProfileState>(
+      listener: (context, state) {
+        if (state is ProfileLoaded) {
+          setState(() {
+            _darkModeEnabled = state.profile.isDarkMode;
+            _notificationsEnabled = state.profile.isMonthlyReportEnabled;
+            _twoStepEnabled = state.profile.isTwoStepEnabled;
+          });
+        } else if (state is PreferencesUpdateSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Preferences updated')),
+          );
+        } else if (state is ProfileError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
@@ -198,14 +236,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Dark mode',
                     trailing: Switch(
                       value: _darkModeEnabled,
-                      onChanged: (v) => setState(() => _darkModeEnabled = v),
+                      onChanged: (v) {
+                        setState(() => _darkModeEnabled = v);
+                        _savePreferences();
+                      },
                       activeThumbColor: AppColors.primary,
                       activeTrackColor: AppColors.primary.withValues(
                         alpha: 0.5,
                       ),
                     ),
-                    onTap: () =>
-                        setState(() => _darkModeEnabled = !_darkModeEnabled),
+                    onTap: () {
+                      setState(() => _darkModeEnabled = !_darkModeEnabled);
+                      _savePreferences();
+                    },
                   ),
                   Divider(height: 1, color: AppColors.border, indent: 52.w),
                   _SettingsTile(
@@ -213,16 +256,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Notification preferences',
                     trailing: Switch(
                       value: _notificationsEnabled,
-                      onChanged: (v) =>
-                          setState(() => _notificationsEnabled = v),
+                      onChanged: (v) {
+                        setState(() => _notificationsEnabled = v);
+                        _savePreferences();
+                      },
                       activeThumbColor: AppColors.primary,
                       activeTrackColor: AppColors.primary.withValues(
                         alpha: 0.5,
                       ),
                     ),
-                    onTap: () => setState(
-                      () => _notificationsEnabled = !_notificationsEnabled,
-                    ),
+                    onTap: () {
+                      setState(
+                        () => _notificationsEnabled = !_notificationsEnabled,
+                      );
+                      _savePreferences();
+                    },
                   ),
                 ],
               ),
@@ -230,6 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SizedBox(height: 20.h),
           ],
         ),
+      ),
       ),
     );
   }

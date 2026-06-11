@@ -5,7 +5,7 @@
 /// { "TEXT": "...", "Cleand_Text": "...", "Sentiment_Label": "0" }
 /// ```
 ///
-/// `Sentiment_Label`: "1" => violent, "0" => non-violent (safe/neutral).
+/// `Sentiment_Label`: "0" => violent, "1" => non-violent (safe/neutral).
 class TextPredictionResponse {
   final String originalText;
   final String cleanedText;
@@ -17,7 +17,7 @@ class TextPredictionResponse {
     required this.sentimentLabel,
   });
 
-  bool get isViolent => sentimentLabel.trim() == '1';
+  bool get isViolent => sentimentLabel.trim() == '0';
 
   factory TextPredictionResponse.fromJson(Map<String, dynamic> json) {
     return TextPredictionResponse(

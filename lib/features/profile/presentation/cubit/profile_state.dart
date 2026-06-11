@@ -35,6 +35,10 @@ class PasswordChangeSuccess extends ProfileState {
   const PasswordChangeSuccess();
 }
 
+class PreferencesUpdateSuccess extends ProfileState {
+  const PreferencesUpdateSuccess();
+}
+
 class ProfileError extends ProfileState {
   final String message;
   const ProfileError(this.message);

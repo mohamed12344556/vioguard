@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../../core/theme/colors.dart';
 import '../presentation/cubit/profile_cubit.dart';
 
@@ -32,10 +33,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   void _updatePassword() {
     if (!_formKey.currentState!.validate()) return;
     context.read<ProfileCubit>().changePassword(
-          currentPassword: _currentPasswordController.text,
-          newPassword: _newPasswordController.text,
-          confirmPassword: _confirmPasswordController.text,
-        );
+      currentPassword: _currentPasswordController.text,
+      newPassword: _newPasswordController.text,
+      confirmPassword: _confirmPasswordController.text,
+    );
   }
 
   bool get _hasInput =>
@@ -52,8 +53,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back_ios,
-              color: AppColors.textPrimary, size: 20.sp),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: AppColors.textPrimary,
+            size: 20.sp,
+          ),
         ),
         centerTitle: true,
         title: Text(
@@ -98,8 +102,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   controller: _currentPasswordController,
                   hint: 'Enter current password',
                   showPassword: _showCurrent,
-                  onToggle: () =>
-                      setState(() => _showCurrent = !_showCurrent),
+                  onToggle: () => setState(() => _showCurrent = !_showCurrent),
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                 ),
@@ -131,8 +134,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   controller: _confirmPasswordController,
                   hint: 'Confirm new password',
                   showPassword: _showConfirm,
-                  onToggle: () =>
-                      setState(() => _showConfirm = !_showConfirm),
+                  onToggle: () => setState(() => _showConfirm = !_showConfirm),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Required';
                     if (v != _newPasswordController.text) {
@@ -149,12 +151,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       width: double.infinity,
                       height: 52.h,
                       child: ElevatedButton(
-                        onPressed:
-                            _hasInput && !isLoading ? _updatePassword : null,
+                        onPressed: _hasInput && !isLoading
+                            ? _updatePassword
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          disabledBackgroundColor:
-                              AppColors.primary.withValues(alpha: 0.4),
+                          disabledBackgroundColor: AppColors.primary.withValues(
+                            alpha: 0.4,
+                          ),
                           foregroundColor: Colors.white,
                           disabledForegroundColor: Colors.white,
                           elevation: 0,
@@ -227,16 +231,19 @@ class _PasswordField extends StatelessWidget {
           controller: controller,
           obscureText: !showPassword,
           validator: validator,
-          style:
-              TextStyle(color: AppColors.textPrimary, fontSize: 15.sp),
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 15.sp),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle:
-                TextStyle(color: AppColors.textLight, fontSize: 14.sp),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-            prefixIcon: Icon(Icons.lock_outline,
-                color: AppColors.textLight, size: 20.sp),
+            hintStyle: TextStyle(color: AppColors.textLight, fontSize: 14.sp),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 14.w,
+              vertical: 14.h,
+            ),
+            prefixIcon: Icon(
+              Icons.lock_outline,
+              color: AppColors.textLight,
+              size: 20.sp,
+            ),
             suffixIcon: IconButton(
               onPressed: onToggle,
               icon: Icon(

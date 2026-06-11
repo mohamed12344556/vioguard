@@ -41,6 +41,22 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
+  Future<void> updatePreferences({
+    required bool isDarkMode,
+    required bool isMonthlyReportEnabled,
+  }) async {
+    emit(const ProfileUpdating());
+    final request = UpdatePreferencesRequest(
+      isDarkMode: isDarkMode,
+      isMonthlyReportEnabled: isMonthlyReportEnabled,
+    );
+    final result = await repository.updatePreferences(_email, request);
+    result.fold(
+      (failure) => emit(ProfileError(failure.message)),
+      (_) => emit(const PreferencesUpdateSuccess()),
+    );
+  }
+
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,

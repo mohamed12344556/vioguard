@@ -28,7 +28,7 @@ class DioConsumer implements ApiConsumer {
   @override
   Future<dynamic> post(
     String path, {
-    Map<String, dynamic>? body,
+    dynamic body,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
   }) async {

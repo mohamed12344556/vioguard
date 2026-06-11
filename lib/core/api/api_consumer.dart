@@ -16,12 +16,13 @@ abstract class ApiConsumer {
   /// Performs a POST request
   ///
   /// [path] - API endpoint path
-  /// [body] - Request body data
+  /// [body] - Request body data (a JSON-serializable Map or a `FormData` for
+  ///          multipart uploads)
   /// [queryParameters] - Optional query parameters
   /// Returns dynamic response data
   Future<dynamic> post(
     String path, {
-    Map<String, dynamic>? body,
+    dynamic body,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
   });

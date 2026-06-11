@@ -23,6 +23,10 @@ import '../../features/detection/presentation/cubit/detection_cubit.dart';
 import '../../features/detection/presentation/cubit/video_prediction_cubit.dart';
 import '../../features/detection/presentation/cubit/text_prediction_cubit.dart';
 
+import '../../features/content/data/datasources/content_remote_datasource.dart';
+import '../../features/content/data/repositories/content_repository.dart';
+import '../../features/content/presentation/cubit/content_cubit.dart';
+
 import '../../features/history/data/datasources/history_remote_datasource.dart';
 import '../../features/history/data/repositories/history_repository.dart';
 import '../../features/history/presentation/cubit/history_cubit.dart';
@@ -105,12 +109,12 @@ Future<void> init() async {
     () => DetectionCubit(repository: sl()),
   );
 
-  //! Video Prediction (AI Model)
+  //! Video Prediction (AI Model + backend persistence)
   sl.registerLazySingleton<VideoPredictionDataSource>(
-    () => VideoPredictionDataSourceImpl(dio: Dio()),
+    () => VideoPredictionDataSourceImpl(dio: Dio(), api: sl()),
   );
   sl.registerFactory(
-    () => VideoPredictionCubit(dataSource: sl()),
+    () => VideoPredictionCubit(dataSource: sl(), tokenStorage: sl()),
   );
 
   //! Text Prediction (Sentiment AI Model + backend persistence)
@@ -119,6 +123,17 @@ Future<void> init() async {
   );
   sl.registerFactory(
     () => TextPredictionCubit(dataSource: sl(), tokenStorage: sl()),
+  );
+
+  //! Content
+  sl.registerLazySingleton<ContentRemoteDataSource>(
+    () => ContentRemoteDataSourceImpl(api: sl()),
+  );
+  sl.registerLazySingleton<ContentRepository>(
+    () => ContentRepositoryImpl(remoteDataSource: sl()),
+  );
+  sl.registerFactory(
+    () => ContentCubit(repository: sl(), tokenStorage: sl()),
   );
 
   //! History

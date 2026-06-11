@@ -1,10 +1,12 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../core/theme/colors.dart';
+
 import '../../../core/routes/routes.dart';
+import '../../../core/theme/colors.dart';
 import '../presentation/cubit/video_prediction_cubit.dart';
 
 class VideoDetectionScreen extends StatefulWidget {
@@ -18,6 +20,16 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _selectedVideo;
   String? _fileName;
+
+  /// Cached so dispose() can reset the cubit without an unsafe context lookup
+  /// on a deactivated widget.
+  late VideoPredictionCubit _cubit;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cubit = context.read<VideoPredictionCubit>();
+  }
 
   Future<void> _pickVideo(ImageSource source) async {
     final XFile? video = await _picker.pickVideo(
@@ -75,7 +87,7 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
 
   @override
   void dispose() {
-    context.read<VideoPredictionCubit>().reset();
+    _cubit.reset();
     super.dispose();
   }
 
@@ -241,8 +253,9 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        disabledBackgroundColor:
-                            AppColors.primary.withValues(alpha: 0.4),
+                        disabledBackgroundColor: AppColors.primary.withValues(
+                          alpha: 0.4,
+                        ),
                         foregroundColor: Colors.white,
                         disabledForegroundColor: Colors.white,
                         shape: RoundedRectangleBorder(

@@ -15,9 +15,19 @@ class TextDetectionScreen extends StatefulWidget {
 class _TextDetectionScreenState extends State<TextDetectionScreen> {
   final TextEditingController _textController = TextEditingController();
 
+  /// Cached so dispose() can reset the cubit without an unsafe context lookup
+  /// on a deactivated widget.
+  late TextPredictionCubit _cubit;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cubit = context.read<TextPredictionCubit>();
+  }
+
   @override
   void dispose() {
-    context.read<TextPredictionCubit>().reset();
+    _cubit.reset();
     _textController.dispose();
     super.dispose();
   }

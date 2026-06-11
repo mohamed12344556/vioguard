@@ -10,8 +10,8 @@ class AppConfig {
 
   static String get baseUrl {
     return isProduction
-        ? 'https://refold-ideology-elbow.ngrok-free.dev'
-        : 'https://refold-ideology-elbow.ngrok-free.dev';
+        ? 'https://vioguard.runasp.net'
+        : 'https://vioguard.runasp.net';
   }
 
   /// Sentiment / text-analysis AI model (separate FastAPI service)
