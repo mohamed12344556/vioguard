@@ -1,25 +1,31 @@
+/// A single history record, as returned by `GET /api/History`
+/// (HistoryListItemDto).
 class HistoryItemModel {
   final String id;
-  final String domainName;
+  final String url;
   final String contentType;
-  final String relativeTime;
-  final String safetyStatus;
+  final String timeAgo;
+  final String status;
+  final DateTime? detectionDate;
 
   const HistoryItemModel({
     required this.id,
-    required this.domainName,
+    required this.url,
     required this.contentType,
-    required this.relativeTime,
-    required this.safetyStatus,
+    required this.timeAgo,
+    required this.status,
+    this.detectionDate,
   });
 
   factory HistoryItemModel.fromJson(Map<String, dynamic> json) {
     return HistoryItemModel(
       id: json['id'] as String? ?? '',
-      domainName: json['domainName'] as String? ?? '',
+      url: json['url'] as String? ?? '',
       contentType: json['contentType'] as String? ?? '',
-      relativeTime: json['relativeTime'] as String? ?? '',
-      safetyStatus: json['safetyStatus'] as String? ?? '',
+      timeAgo: json['timeAgo'] as String? ?? '',
+      status: json['status'] as String? ?? '',
+      detectionDate:
+          DateTime.tryParse(json['detectionDate']?.toString() ?? ''),
     );
   }
 }

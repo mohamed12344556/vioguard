@@ -165,8 +165,8 @@ class _HistoryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isViolent = item.safetyStatus.toLowerCase() == 'flagged' ||
-        item.safetyStatus.toLowerCase() == 'violent';
+    final status = item.status.toLowerCase();
+    final isViolent = status == 'flagged' || status == 'violent';
     final isVideo = item.contentType.toLowerCase().contains('video');
 
     return GestureDetector(
@@ -201,7 +201,7 @@ class _HistoryItemCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.domainName,
+                    item.url,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -220,7 +220,7 @@ class _HistoryItemCard extends StatelessWidget {
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        item.relativeTime,
+                        item.timeAgo,
                         style: TextStyle(
                           color: AppColors.textLight,
                           fontSize: 12.sp,
@@ -232,7 +232,7 @@ class _HistoryItemCard extends StatelessWidget {
               ),
             ),
             SizedBox(width: 8.w),
-            _StatusBadge(isViolent: isViolent, label: item.safetyStatus),
+            _StatusBadge(isViolent: isViolent, label: item.status),
             SizedBox(width: 4.w),
             Icon(
               Icons.chevron_right,

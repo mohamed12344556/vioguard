@@ -602,10 +602,10 @@ class _HomeContentState extends State<_HomeContent> {
                         (item) => Padding(
                           padding: EdgeInsets.only(bottom: 10.h),
                           child: _RecentLinkCard(
-                            domainName: item.domainName,
+                            domainName: item.url,
                             contentType: item.contentType,
-                            relativeTime: item.relativeTime,
-                            safetyStatus: item.safetyStatus,
+                            relativeTime: item.timeAgo,
+                            safetyStatus: item.status,
                             onTap: () => Navigator.pushNamed(
                               context,
                               Routes.detectionDetails,

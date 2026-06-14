@@ -10,9 +10,15 @@ class AppConfig {
 
   static String get baseUrl {
     return isProduction
-        ? 'https://vioguard.runasp.net'
-        : 'https://vioguard.runasp.net';
+        ? 'https://asmaaelsayed-001-site1.ltempurl.com'
+        : 'https://asmaaelsayed-001-site1.ltempurl.com';
   }
+
+  /// HTTP Basic Auth credentials guarding the hosting environment.
+  /// The host returns 401 on every request without these, so they must be
+  /// sent on every call to [baseUrl] (see `AuthInterceptor`).
+  static const String hostingBasicAuthUser = '11315760';
+  static const String hostingBasicAuthPassword = '60-dayfreetrial';
 
   /// Sentiment / text-analysis AI model (separate FastAPI service)
   static const String sentimentBaseUrl =

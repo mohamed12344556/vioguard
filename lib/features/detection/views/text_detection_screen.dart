@@ -32,10 +32,23 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
     super.dispose();
   }
 
+  /// Treats the input as a URL when it starts with http(s); otherwise as
+  /// raw text to analyze directly.
+  bool _looksLikeUrl(String value) {
+    final lower = value.toLowerCase();
+    return lower.startsWith('http://') || lower.startsWith('https://');
+  }
+
   void _detectViolence() {
-    final text = _textController.text.trim();
-    if (text.isEmpty) return;
-    context.read<TextPredictionCubit>().predict(text);
+    final input = _textController.text.trim();
+    if (input.isEmpty) return;
+
+    final cubit = context.read<TextPredictionCubit>();
+    if (_looksLikeUrl(input)) {
+      cubit.predictFromUrl(input);
+    } else {
+      cubit.predict(input);
+    }
   }
 
   @override
@@ -43,11 +56,19 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
     return BlocListener<TextPredictionCubit, TextPredictionState>(
       listener: (context, state) {
         if (state is TextPredictionLoaded) {
+          // When a URL was scraped, show the extracted text the model actually
+          // analyzed rather than the raw URL the user typed.
+          final input = _textController.text.trim();
+          final analyzedText = _looksLikeUrl(input)
+              ? (state.response.originalText.isNotEmpty
+                  ? state.response.originalText
+                  : input)
+              : input;
           Navigator.pushNamed(
             context,
             Routes.textDetectionResult,
             arguments: {
-              'text': _textController.text,
+              'text': analyzedText,
               'cleanedText': state.response.cleanedText,
               'isViolent': state.response.isViolent,
             },
@@ -111,7 +132,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                       SizedBox(width: 8.w),
                       Expanded(
                         child: Text(
-                          'Paste or type the text you want to analyze for violent content',
+                          'Paste a link or type the text you want to analyze for violent content',
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 14.sp,
@@ -125,7 +146,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                     controller: _textController,
                     maxLines: 8,
                     decoration: InputDecoration(
-                      hintText: 'Enter text here...',
+                      hintText: 'Enter text or paste a link (http://...)',
                       hintStyle: TextStyle(
                         color: AppColors.textLight,
                         fontSize: 14.sp,

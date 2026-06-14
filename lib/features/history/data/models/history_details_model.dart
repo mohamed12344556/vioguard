@@ -1,56 +1,42 @@
-class AnalysisSummaryItem {
-  final String description;
-  final bool isViolentFlag;
-
-  const AnalysisSummaryItem({
-    required this.description,
-    required this.isViolentFlag,
-  });
-
-  factory AnalysisSummaryItem.fromJson(Map<String, dynamic> json) {
-    return AnalysisSummaryItem(
-      description: json['description'] as String? ?? '',
-      isViolentFlag: json['isViolentFlag'] as bool? ?? false,
-    );
-  }
-}
-
+/// Full details of a history record, as returned by
+/// `GET /api/History/{id}/details` (HistoryDetailsDto).
 class HistoryDetailsModel {
   final String id;
-  final DateTime scannedAt;
+  final String url;
   final String contentType;
-  final bool isVerified;
-  final String sourceUrl;
+  final String formattedDate;
+  final String formattedTime;
   final String currentStatus;
-  final String statusBadgeColor;
-  final List<AnalysisSummaryItem> analysisSummary;
+  final String confidenceText;
+  final String extractedTextContext;
+  final List<String> analysisSummary;
 
   const HistoryDetailsModel({
     required this.id,
-    required this.scannedAt,
+    required this.url,
     required this.contentType,
-    required this.isVerified,
-    required this.sourceUrl,
+    required this.formattedDate,
+    required this.formattedTime,
     required this.currentStatus,
-    required this.statusBadgeColor,
+    required this.confidenceText,
+    required this.extractedTextContext,
     required this.analysisSummary,
   });
 
   factory HistoryDetailsModel.fromJson(Map<String, dynamic> json) {
     return HistoryDetailsModel(
       id: json['id'] as String? ?? '',
-      scannedAt: DateTime.tryParse(json['scannedAt'] as String? ?? '') ??
-          DateTime.now(),
+      url: json['url'] as String? ?? '',
       contentType: json['contentType'] as String? ?? '',
-      isVerified: json['isVerified'] as bool? ?? false,
-      sourceUrl: json['sourceUrl'] as String? ?? '',
+      formattedDate: json['formattedDate'] as String? ?? '',
+      formattedTime: json['formattedTime'] as String? ?? '',
       currentStatus: json['currentStatus'] as String? ?? '',
-      statusBadgeColor: json['statusBadgeColor'] as String? ?? '',
+      confidenceText: json['confidenceText'] as String? ?? '',
+      extractedTextContext: json['extractedTextContext'] as String? ?? '',
       analysisSummary: (json['analysisSummary'] as List<dynamic>?)
-              ?.map(
-                  (e) => AnalysisSummaryItem.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => e.toString())
               .toList() ??
-          [],
+          const [],
     );
   }
 }

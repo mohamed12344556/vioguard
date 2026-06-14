@@ -123,8 +123,13 @@ class DioConsumer implements ApiConsumer {
   AppException _handleBadResponse(Response? response) {
     final statusCode = response?.statusCode;
     final data = response?.data;
+    // ASP.NET returns the human message under `message`, but ProblemDetails
+    // responses (415, 502, validation) use `detail`/`title` instead.
     final message = data is Map<String, dynamic>
-        ? (data['message'] as String? ?? 'Server error')
+        ? (data['message'] as String? ??
+            data['detail'] as String? ??
+            data['title'] as String? ??
+            'Server error')
         : 'Server error';
 
     switch (statusCode) {

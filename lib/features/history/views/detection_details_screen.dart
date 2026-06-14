@@ -87,28 +87,22 @@ class _DetailsContent extends StatelessWidget {
 
   const _DetailsContent({required this.details, required this.historyId});
 
-  Color _parseStatusColor() {
-    final hex = details.statusBadgeColor.replaceAll('#', '');
-    if (hex.length == 6) {
-      return Color(int.parse('FF$hex', radix: 16));
-    }
-    if (details.currentStatus.toLowerCase().contains('violent')) {
+  /// A violent/flagged status renders red; everything else renders green.
+  Color _statusColor() {
+    final status = details.currentStatus.toLowerCase();
+    if (status.contains('violent') && !status.contains('non')) {
       return AppColors.error;
     }
+    if (status.contains('flagged')) return AppColors.error;
     return AppColors.success;
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _parseStatusColor();
+    final statusColor = _statusColor();
     final isVideo = details.contentType.toLowerCase().contains('video');
-    final formattedDate =
-        '${_monthName(details.scannedAt.month)} ${details.scannedAt.day}, ${details.scannedAt.year}';
-    final hour = details.scannedAt.hour;
-    final minute = details.scannedAt.minute.toString().padLeft(2, '0');
-    final period = hour >= 12 ? 'PM' : 'AM';
-    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-    final formattedTime = '$displayHour:$minute $period';
+    final formattedDate = details.formattedDate;
+    final formattedTime = details.formattedTime;
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
@@ -235,19 +229,6 @@ class _DetailsContent extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (details.isVerified)
-                      Row(
-                        children: [
-                          Icon(Icons.check_circle,
-                              color: AppColors.success, size: 14.sp),
-                          SizedBox(width: 4.w),
-                          Text('Verified',
-                              style: TextStyle(
-                                  color: AppColors.success,
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w500)),
-                        ],
-                      ),
                   ],
                 ),
                 SizedBox(height: 12.h),
@@ -257,7 +238,7 @@ class _DetailsContent extends StatelessWidget {
                     SizedBox(width: 8.w),
                     Expanded(
                       child: Text(
-                        details.sourceUrl,
+                        details.url,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -329,7 +310,7 @@ class _DetailsContent extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 14.h),
-                ...details.analysisSummary.map((item) => Padding(
+                ...details.analysisSummary.map((line) => Padding(
                       padding: EdgeInsets.only(bottom: 12.h),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,9 +321,7 @@ class _DetailsContent extends StatelessWidget {
                               width: 7.w,
                               height: 7.h,
                               decoration: BoxDecoration(
-                                color: item.isViolentFlag
-                                    ? AppColors.error
-                                    : AppColors.success,
+                                color: statusColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -350,7 +329,7 @@ class _DetailsContent extends StatelessWidget {
                           SizedBox(width: 10.w),
                           Expanded(
                             child: Text(
-                              item.description,
+                              line,
                               style: TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 14.sp,
@@ -427,13 +406,6 @@ class _DetailsContent extends StatelessWidget {
     );
   }
 
-  String _monthName(int month) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return months[month - 1];
-  }
 }
 
 class _SectionLabel extends StatelessWidget {

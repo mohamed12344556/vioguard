@@ -15,16 +15,19 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   ProfileRemoteDataSourceImpl({required this.api});
 
+  // The backend resolves the current user from the bearer token, so [email]
+  // is unused in the path — these are fixed root routes.
+
   @override
   Future<UserProfileModel> getUserProfile(String email) async {
-    final response = await api.get(ServerStrings.userProfile(email));
+    final response = await api.get(ServerStrings.profile);
     return UserProfileModel.fromJson(response as Map<String, dynamic>);
   }
 
   @override
   Future<void> updateProfile(String email, UserProfileModel profile) async {
     await api.put(
-      ServerStrings.updateProfile(email),
+      ServerStrings.profile,
       body: profile.toJson(),
     );
   }
@@ -33,7 +36,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   Future<void> updatePreferences(
       String email, UpdatePreferencesRequest request) async {
     await api.put(
-      ServerStrings.updatePreferences(email),
+      ServerStrings.preferences,
       body: request.toJson(),
     );
   }
@@ -42,7 +45,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   Future<void> changePassword(
       String email, ChangePasswordRequest request) async {
     await api.post(
-      ServerStrings.changePassword(email),
+      ServerStrings.changePassword,
       body: request.toJson(),
     );
   }
