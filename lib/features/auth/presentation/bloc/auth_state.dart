@@ -28,6 +28,18 @@ class RegisterSuccess extends AuthState {
   const RegisterSuccess();
 }
 
+class ForgotPasswordSuccess extends AuthState {
+  final String email;
+  const ForgotPasswordSuccess({required this.email});
+
+  @override
+  List<Object> get props => [email];
+}
+
+class ResetPasswordSuccess extends AuthState {
+  const ResetPasswordSuccess();
+}
+
 class AuthError extends AuthState {
   final String message;
   const AuthError(this.message);

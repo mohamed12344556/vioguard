@@ -12,6 +12,7 @@ abstract class ProfileRepository {
       String email, UpdatePreferencesRequest request);
   Future<Either<Failure, void>> changePassword(
       String email, ChangePasswordRequest request);
+  Future<Either<Failure, void>> deleteAccount(String email);
 }
 
 class ProfileRepositoryImpl implements ProfileRepository {
@@ -69,6 +70,20 @@ class ProfileRepositoryImpl implements ProfileRepository {
       String email, ChangePasswordRequest request) async {
     try {
       await remoteDataSource.changePassword(email, request);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(message: e.message));
+    } on AppException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteAccount(String email) async {
+    try {
+      await remoteDataSource.deleteAccount(email);
       return const Right(null);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));

@@ -372,7 +372,7 @@ class _HomeContentState extends State<_HomeContent> {
                   fontSize: 15.sp,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Paste URL or text here...',
+                  hintText: 'Paste URL here...',
                   hintStyle: TextStyle(
                     color: AppColors.textLight,
                     fontSize: 15.sp,
@@ -380,7 +380,7 @@ class _HomeContentState extends State<_HomeContent> {
                   prefixIcon: Padding(
                     padding: EdgeInsets.only(left: 14.w, right: 10.w),
                     child: Icon(
-                      _isUrl ? Icons.link : Icons.notes_outlined,
+                      Icons.link,
                       color: _canDetect
                           ? AppColors.primary
                           : AppColors.textLight,

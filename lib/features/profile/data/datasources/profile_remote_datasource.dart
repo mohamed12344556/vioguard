@@ -8,6 +8,7 @@ abstract class ProfileRemoteDataSource {
   Future<void> updatePreferences(
       String email, UpdatePreferencesRequest request);
   Future<void> changePassword(String email, ChangePasswordRequest request);
+  Future<void> deleteAccount(String email);
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -48,5 +49,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       ServerStrings.changePassword,
       body: request.toJson(),
     );
+  }
+
+  @override
+  Future<void> deleteAccount(String email) async {
+    await api.delete(ServerStrings.deleteAccount);
   }
 }

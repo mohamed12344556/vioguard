@@ -35,6 +35,10 @@ class PasswordChangeSuccess extends ProfileState {
   const PasswordChangeSuccess();
 }
 
+class AccountDeleteSuccess extends ProfileState {
+  const AccountDeleteSuccess();
+}
+
 class PreferencesUpdateSuccess extends ProfileState {
   const PreferencesUpdateSuccess();
 }

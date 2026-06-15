@@ -27,7 +27,8 @@ class AppRouter {
       case Routes.forgotPassword:
         return _buildRoute(const ForgotPasswordPage(), settings);
       case Routes.resetPassword:
-        return _buildRoute(const ResetPasswordPage(), settings);
+        final email = settings.arguments as String? ?? '';
+        return _buildRoute(ResetPasswordPage(email: email), settings);
       case Routes.home:
       case Routes.dashboard:
         return _buildRoute(const DashboardScreen(), settings);

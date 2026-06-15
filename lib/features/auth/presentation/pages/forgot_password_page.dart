@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../bloc/auth_cubit.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -14,7 +16,6 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -24,14 +25,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   void _onSendResetLink() {
     if (_formKey.currentState?.validate() ?? false) {
-      setState(() => _isLoading = true);
-      // TODO: Implement send reset link logic
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          Navigator.pushNamed(context, '/reset-password');
-        }
-      });
+      context
+          .read<AuthCubit>()
+          .forgotPassword(email: _emailController.text.trim());
     }
   }
 
@@ -61,74 +57,95 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Divider(color: AppColors.borderColor(context), height: 1),
-                SizedBox(height: 60.h),
-                // Lock Icon
-                Center(
-                  child: Container(
-                    width: 80.w,
-                    height: 80.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16.r),
+        child: BlocConsumer<AuthCubit, AuthState>(
+          listener: (context, state) {
+            if (state is ForgotPasswordSuccess) {
+              Navigator.pushNamed(
+                context,
+                '/reset-password',
+                arguments: state.email,
+              );
+            } else if (state is AuthError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            final isLoading = state is AuthLoading;
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Divider(color: AppColors.borderColor(context), height: 1),
+                    SizedBox(height: 60.h),
+                    // Lock Icon
+                    Center(
+                      child: Container(
+                        width: 80.w,
+                        height: 80.w,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                        child: Icon(
+                          Icons.lock_outline,
+                          color: AppColors.primaryLight,
+                          size: 48.sp,
+                        ),
+                      ),
                     ),
-                    child: Icon(
-                      Icons.lock_outline,
-                      color: AppColors.primaryLight,
-                      size: 48.sp,
+                    SizedBox(height: 40.h),
+                    // Description
+                    Text(
+                      'Enter your email address to reset your password.',
+                      style: TextStyle(
+                        color: AppColors.textPrimaryColor(context),
+                        fontSize: 16.sp,
+                        height: 1.5,
+                      ),
                     ),
-                  ),
+                    SizedBox(height: 32.h),
+                    // Email Field
+                    CustomTextField(
+                      hint: 'Email address',
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      prefixIcon: Icon(
+                        Icons.email_outlined,
+                        color: AppColors.textSecondaryColor(context),
+                        size: 20.sp,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 32.h),
+                    // Continue Button
+                    CustomButton(
+                      text: 'Continue',
+                      onPressed: _onSendResetLink,
+                      isLoading: isLoading,
+                      borderRadius: 30,
+                    ),
+                  ],
                 ),
-                SizedBox(height: 40.h),
-                // Description
-                Text(
-                  'Enter your email address to receive a password reset link.',
-                  style: TextStyle(
-                    color: AppColors.textPrimaryColor(context),
-                    fontSize: 16.sp,
-                    height: 1.5,
-                  ),
-                ),
-                SizedBox(height: 32.h),
-                // Email Field
-                CustomTextField(
-                  hint: 'Email address',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icon(
-                    Icons.email_outlined,
-                    color: AppColors.textSecondaryColor(context),
-                    size: 20.sp,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 32.h),
-                // Send Reset Link Button
-                CustomButton(
-                  text: 'Send Reset Link',
-                  onPressed: _onSendResetLink,
-                  isLoading: _isLoading,
-                  borderRadius: 30,
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

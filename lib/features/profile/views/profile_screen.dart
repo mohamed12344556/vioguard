@@ -23,9 +23,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
     context.read<ProfileCubit>().loadProfile();
   }
 
+  bool _isDeleting = false;
+
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ProfileCubit, ProfileState>(
+    return BlocConsumer<ProfileCubit, ProfileState>(
+      listener: (context, state) {
+        if (!_isDeleting) return;
+        if (state is AccountDeleteSuccess) {
+          _isDeleting = false;
+          context.read<AuthCubit>().logout();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Your account has been deleted.'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            Routes.login,
+            (route) => false,
+          );
+        } else if (state is ProfileError) {
+          _isDeleting = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
         String fullName = '';
         String email = '';
@@ -213,6 +241,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    final profileCubit = context.read<ProfileCubit>();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -228,12 +257,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<AuthCubit>().logout();
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                Routes.login,
-                (route) => false,
-              );
+              _isDeleting = true;
+              profileCubit.deleteAccount();
             },
             child: Text('Delete', style: TextStyle(color: AppColors.error)),
           ),

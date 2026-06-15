@@ -46,7 +46,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return BlocListener<ProfileCubit, ProfileState>(
       listener: (context, state) {
         if (state is ProfileLoaded) {
-          context.read<ThemeCubit>().hydrateFromBackend(state.profile.isDarkMode);
+          context.read<ThemeCubit>().hydrateFromBackend(
+            state.profile.isDarkMode,
+          );
           setState(() {
             _darkModeEnabled = context.read<ThemeCubit>().isDarkMode;
             _notificationsEnabled = state.profile.isMonthlyReportEnabled;
@@ -114,7 +116,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onTap: () =>
                           Navigator.pushNamed(context, Routes.changePassword),
                     ),
-                    Divider(height: 1, color: AppColors.borderColor(context), indent: 52.w),
+                    Divider(
+                      height: 1,
+                      color: AppColors.borderColor(context),
+                      indent: 52.w,
+                    ),
                     _SettingsTile(
                       icon: Icons.shield_outlined,
                       title: 'Two-step verification',
@@ -132,49 +138,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 24.h),
+              // SizedBox(height: 24.h),
 
-              // Privacy & Security
-              _SectionTitle(title: 'Privacy & Security'),
-              SizedBox(height: 10.h),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceColor(context),
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColors.borderColor(context)),
-                ),
-                child: Column(
-                  children: [
-                    _SettingsTile(
-                      title: 'Data usage information',
-                      trailing: Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textSecondaryColor(context),
-                      ),
-                      onTap: () {},
-                    ),
-                    Divider(height: 1, color: AppColors.borderColor(context)),
-                    _SettingsTile(
-                      title: 'Privacy policy',
-                      trailing: Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textSecondaryColor(context),
-                      ),
-                      onTap: () {},
-                    ),
-                    Divider(height: 1, color: AppColors.borderColor(context)),
-                    _SettingsTile(
-                      title: 'Terms of service',
-                      trailing: Icon(
-                        Icons.chevron_right,
-                        color: AppColors.textSecondaryColor(context),
-                      ),
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 24.h),
+              // // Privacy & Security
+              // _SectionTitle(title: 'Privacy & Security'),
+              // SizedBox(height: 10.h),
+              // Container(
+              //   decoration: BoxDecoration(
+              //     color: AppColors.surfaceColor(context),
+              //     borderRadius: BorderRadius.circular(12.r),
+              //     border: Border.all(color: AppColors.borderColor(context)),
+              //   ),
+              //   child: Column(
+              //     children: [
+              //       _SettingsTile(
+              //         title: 'Data usage information',
+              //         trailing: Icon(
+              //           Icons.chevron_right,
+              //           color: AppColors.textSecondaryColor(context),
+              //         ),
+              //         onTap: () {},
+              //       ),
+              //       Divider(height: 1, color: AppColors.borderColor(context)),
+              //       _SettingsTile(
+              //         title: 'Privacy policy',
+              //         trailing: Icon(
+              //           Icons.chevron_right,
+              //           color: AppColors.textSecondaryColor(context),
+              //         ),
+              //         onTap: () {},
+              //       ),
+              //       Divider(height: 1, color: AppColors.borderColor(context)),
+              //       _SettingsTile(
+              //         title: 'Terms of service',
+              //         trailing: Icon(
+              //           Icons.chevron_right,
+              //           color: AppColors.textSecondaryColor(context),
+              //         ),
+              //         onTap: () {},
+              //       ),
+              //     ],
+              //   ),
+              // ),
+              // SizedBox(height: 24.h),
 
               // // Linked Accounts
               // _SectionTitle(title: 'Linked Accounts'),
@@ -254,7 +260,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       onTap: () => _applyDarkMode(!_darkModeEnabled),
                     ),
-                    Divider(height: 1, color: AppColors.borderColor(context), indent: 52.w),
+                    Divider(
+                      height: 1,
+                      color: AppColors.borderColor(context),
+                      indent: 52.w,
+                    ),
                     _SettingsTile(
                       icon: Icons.notifications_outlined,
                       title: 'Notification preferences',
@@ -335,7 +345,11 @@ class _SettingsTile extends StatelessWidget {
               leading!,
               SizedBox(width: 12.w),
             ] else if (icon != null) ...[
-              Icon(icon, color: AppColors.textSecondaryColor(context), size: 20.sp),
+              Icon(
+                icon,
+                color: AppColors.textSecondaryColor(context),
+                size: 20.sp,
+              ),
               SizedBox(width: 12.w),
             ],
             Expanded(

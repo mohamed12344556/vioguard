@@ -4,6 +4,8 @@ class ServerStrings {
   // Auth
   static const String login = '/api/auth/login';
   static const String register = '/api/auth/register';
+  static const String forgotPassword = '/api/auth/forgot-password';
+  static const String resetPassword = '/api/auth/reset-password';
 
   // Detection
   static const String analyze = '/api/Detection/analyze';
@@ -35,4 +37,5 @@ class ServerStrings {
   static const String profile = '/profile';
   static const String preferences = '/preferences';
   static const String changePassword = '/change-password';
+  static const String deleteAccount = '/delete-account';
 }

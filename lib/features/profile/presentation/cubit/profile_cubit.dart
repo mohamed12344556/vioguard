@@ -74,4 +74,13 @@ class ProfileCubit extends Cubit<ProfileState> {
       (_) => emit(const PasswordChangeSuccess()),
     );
   }
+
+  Future<void> deleteAccount() async {
+    emit(const ProfileUpdating());
+    final result = await repository.deleteAccount(_email);
+    result.fold(
+      (failure) => emit(ProfileError(failure.message)),
+      (_) => emit(const AccountDeleteSuccess()),
+    );
+  }
 }
