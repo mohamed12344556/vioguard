@@ -1,0 +1,18 @@
+/// Template for the Gemini verification config.
+///
+/// Copy this file to `gemini_config.dart` (same folder) and paste your own
+/// Gemini API key. The real file is git-ignored so keys are never committed.
+///
+/// Get a free key: https://aistudio.google.com/app/apikey
+class GeminiConfig {
+  GeminiConfig._();
+
+  static const String apiKey = 'PASTE_YOUR_GEMINI_API_KEY_HERE';
+
+  static const String modelName = 'gemini-2.0-flash';
+
+  static const String _placeholder = 'PASTE_YOUR_GEMINI_API_KEY_HERE';
+
+  static bool get isEnabled =>
+      apiKey.isNotEmpty && apiKey != _placeholder;
+}

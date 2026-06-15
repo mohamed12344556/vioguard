@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'api_consumer.dart';
 import '../errors/exceptions.dart';
@@ -33,9 +35,13 @@ class DioConsumer implements ApiConsumer {
     Map<String, String>? headers,
   }) async {
     try {
+      // Endpoints that take a raw `[FromBody] string` (e.g. scrape-text/-video/-any)
+      // expect a JSON string — i.e. the value wrapped in quotes. A bare String must
+      // be JSON-encoded so it isn't sent as invalid JSON. Maps/lists are left to Dio.
+      final data = body is String ? jsonEncode(body) : body;
       final response = await dio.post(
         path,
-        data: body,
+        data: data,
         queryParameters: queryParameters,
         options: Options(headers: headers),
       );

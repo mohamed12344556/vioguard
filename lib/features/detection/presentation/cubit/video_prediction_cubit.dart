@@ -3,7 +3,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/api/token_storage.dart';
+import '../../data/models/gemini_verification.dart';
 import '../../data/models/video_prediction_response.dart';
+import '../../data/datasources/gemini_verifier.dart';
 import '../../data/datasources/video_prediction_datasource.dart';
 
 part 'video_prediction_state.dart';
@@ -11,10 +13,12 @@ part 'video_prediction_state.dart';
 class VideoPredictionCubit extends Cubit<VideoPredictionState> {
   final VideoPredictionDataSource dataSource;
   final TokenStorage tokenStorage;
+  final GeminiVerifier geminiVerifier;
 
   VideoPredictionCubit({
     required this.dataSource,
     required this.tokenStorage,
+    required this.geminiVerifier,
   }) : super(const VideoPredictionInitial());
 
   /// Analyzes a video the user picked from their device.
@@ -22,6 +26,10 @@ class VideoPredictionCubit extends Cubit<VideoPredictionState> {
     emit(const VideoPredictionLoading());
     try {
       final response = await dataSource.predict(filePath);
+
+      // Verify with Gemini before saving/showing so the screen opens once with
+      // the final verdict and the corrected result is what gets persisted.
+      final verification = await _verify(response);
 
       final email = tokenStorage.getUserEmail();
       if (email != null && email.isNotEmpty) {
@@ -31,10 +39,10 @@ class VideoPredictionCubit extends Cubit<VideoPredictionState> {
         } catch (_) {
           // Ignore upload failures.
         }
-        await _saveResult(response, email);
+        await _saveResult(response, email, verification: verification);
       }
 
-      emit(VideoPredictionLoaded(response));
+      emit(VideoPredictionLoaded(response, verification: verification));
     } on DioException catch (e) {
       emit(VideoPredictionError(_messageFrom(e)));
     } catch (e) {
@@ -63,12 +71,19 @@ class VideoPredictionCubit extends Cubit<VideoPredictionState> {
           : 'scraped_video.mp4';
       final response = await dataSource.predictBytes(bytes, fileName);
 
+      final verification = await _verify(response, url: trimmedUrl);
+
       final email = tokenStorage.getUserEmail();
       if (email != null && email.isNotEmpty) {
-        await _saveResult(response, email, url: trimmedUrl);
+        await _saveResult(
+          response,
+          email,
+          url: trimmedUrl,
+          verification: verification,
+        );
       }
 
-      emit(VideoPredictionLoaded(response));
+      emit(VideoPredictionLoaded(response, verification: verification));
     } on DioException catch (e) {
       emit(VideoPredictionError(_messageFrom(e)));
     } catch (e) {
@@ -76,16 +91,40 @@ class VideoPredictionCubit extends Cubit<VideoPredictionState> {
     }
   }
 
+  /// Best-effort Gemini second opinion. Returns null when disabled or on error.
+  Future<GeminiVerification?> _verify(
+    VideoPredictionResponse response, {
+    String? url,
+  }) async {
+    if (!geminiVerifier.isEnabled) return null;
+    return geminiVerifier.verifyVideo(
+      modelSaysViolent: response.isViolent,
+      violenceScore: response.violence,
+      nonViolenceScore: response.nonViolence,
+      confidence: response.confidence,
+      sourceUrl: url,
+    );
+  }
+
   /// Persists the analysis result (best-effort; failures are swallowed).
+  /// When Gemini confidently overrides the model, the corrected verdict is
+  /// saved: 0% violence for non-violent, 100% for violent.
   Future<void> _saveResult(
     VideoPredictionResponse response,
     String email, {
     String? url,
+    GeminiVerification? verification,
   }) async {
+    final double violentPercent;
+    if (verification?.overridesModel == true) {
+      violentPercent = verification!.geminiSaysViolent ? 100.0 : 0.0;
+    } else {
+      // `violence` is a 0–1 fraction; the backend expects a percentage.
+      violentPercent = response.violence * 100;
+    }
     await dataSource.saveVideoContent(
       userEmail: email,
-      // `violence` is a 0–1 fraction; the backend expects a percentage.
-      violentPercent: response.violence * 100,
+      violentPercent: violentPercent,
       url: url,
     );
   }

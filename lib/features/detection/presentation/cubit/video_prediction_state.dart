@@ -4,7 +4,7 @@ abstract class VideoPredictionState extends Equatable {
   const VideoPredictionState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class VideoPredictionInitial extends VideoPredictionState {
@@ -17,10 +17,32 @@ class VideoPredictionLoading extends VideoPredictionState {
 
 class VideoPredictionLoaded extends VideoPredictionState {
   final VideoPredictionResponse response;
-  const VideoPredictionLoaded(this.response);
+
+  /// Gemini's second-opinion verification, when available.
+  final GeminiVerification? verification;
+
+  /// Whether the Gemini second opinion is still being fetched.
+  final bool verifying;
+
+  const VideoPredictionLoaded(
+    this.response, {
+    this.verification,
+    this.verifying = false,
+  });
+
+  VideoPredictionLoaded copyWith({
+    GeminiVerification? verification,
+    bool? verifying,
+  }) {
+    return VideoPredictionLoaded(
+      response,
+      verification: verification ?? this.verification,
+      verifying: verifying ?? this.verifying,
+    );
+  }
 
   @override
-  List<Object> get props => [response];
+  List<Object?> get props => [response, verification, verifying];
 }
 
 class VideoPredictionError extends VideoPredictionState {

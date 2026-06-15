@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
-import '../../../core/routes/routes.dart';
 import '../presentation/cubit/text_prediction_cubit.dart';
+import 'text_detection_result_screen.dart';
 
 class TextDetectionScreen extends StatefulWidget {
   const TextDetectionScreen({super.key});
@@ -64,14 +64,20 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                   ? state.response.originalText
                   : input)
               : input;
-          Navigator.pushNamed(
+          // Provide the existing cubit to the result screen so the Gemini
+          // second-opinion card can update live when verification completes.
+          Navigator.push(
             context,
-            Routes.textDetectionResult,
-            arguments: {
-              'text': analyzedText,
-              'cleanedText': state.response.cleanedText,
-              'isViolent': state.response.isViolent,
-            },
+            MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: _cubit,
+                child: TextDetectionResultScreen(
+                  analyzedText: analyzedText,
+                  cleanedText: state.response.cleanedText,
+                  isViolent: state.response.isViolent,
+                ),
+              ),
+            ),
           );
         } else if (state is TextPredictionError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -215,13 +221,26 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                       elevation: 0,
                     ),
                     child: isLoading
-                        ? SizedBox(
-                            width: 24.w,
-                            height: 24.h,
-                            child: const CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 22.w,
+                                height: 22.h,
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              Text(
+                                'Analyzing...',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           )
                         : Text(
                             'Detect Violence',

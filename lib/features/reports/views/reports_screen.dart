@@ -14,17 +14,15 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<ReportsCubit>().loadDashboard();
-  }
+  // Note: the dashboard is loaded/refreshed by DashboardScreen each time the
+  // Reports tab is selected (the IndexedStack keeps this screen alive, so
+  // initState would only ever run once). See `_onTabSelected`.
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ReportsCubit, ReportsState>(
       builder: (context, state) {
-        if (state is ReportsLoading) {
+        if (state is ReportsLoading || state is ReportsInitial) {
           return const Center(child: CircularProgressIndicator());
         }
         if (state is ReportsError) {

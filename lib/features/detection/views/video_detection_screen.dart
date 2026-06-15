@@ -5,9 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/routes/routes.dart';
 import '../../../core/theme/colors.dart';
 import '../presentation/cubit/video_prediction_cubit.dart';
+import 'video_detection_result_screen.dart';
 
 class VideoDetectionScreen extends StatefulWidget {
   const VideoDetectionScreen({super.key});
@@ -96,10 +96,16 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
     return BlocListener<VideoPredictionCubit, VideoPredictionState>(
       listener: (context, state) {
         if (state is VideoPredictionLoaded) {
-          Navigator.pushNamed(
+          // Provide the existing cubit to the result screen so the Gemini
+          // second-opinion card can update live when verification completes.
+          Navigator.push(
             context,
-            Routes.videoDetectionResult,
-            arguments: state.response,
+            MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: _cubit,
+                child: VideoDetectionResultScreen(response: state.response),
+              ),
+            ),
           );
         } else if (state is VideoPredictionError) {
           ScaffoldMessenger.of(context).showSnackBar(

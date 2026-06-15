@@ -9,6 +9,7 @@ import '../../detection/presentation/cubit/video_prediction_cubit.dart';
 import '../../history/presentation/cubit/history_cubit.dart';
 import '../../history/views/history_screen.dart';
 import '../../profile/views/profile_screen.dart';
+import '../../reports/presentation/cubit/reports_cubit.dart';
 import '../../reports/views/reports_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -20,6 +21,19 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
+
+  /// Index of the Reports tab in [IndexedStack] / the bottom nav.
+  static const int _reportsTabIndex = 2;
+
+  void _onTabSelected(int index) {
+    // Tabs live in an IndexedStack, so their screens stay alive and never
+    // re-run initState. Refresh the Reports dashboard each time it's opened so
+    // it reflects the latest analyses.
+    if (index == _reportsTabIndex) {
+      context.read<ReportsCubit>().loadDashboard();
+    }
+    setState(() => _currentIndex = index);
+  }
 
   Future<void> _showExitDialog() async {
     final shouldExit = await showDialog<bool>(
@@ -118,7 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: _onTabSelected,
         backgroundColor: AppColors.surfaceColor(context),
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondaryColor(context),

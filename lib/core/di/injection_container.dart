@@ -17,6 +17,7 @@ import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_cubit.dart';
 
 import '../../features/detection/data/datasources/detection_remote_datasource.dart';
+import '../../features/detection/data/datasources/gemini_verifier.dart';
 import '../../features/detection/data/datasources/video_prediction_datasource.dart';
 import '../../features/detection/data/datasources/text_prediction_datasource.dart';
 import '../../features/detection/data/repositories/detection_repository.dart';
@@ -111,12 +112,19 @@ Future<void> init() async {
     () => DetectionCubit(repository: sl()),
   );
 
+  //! Gemini verification layer (second opinion for text + video)
+  sl.registerLazySingleton<GeminiVerifier>(() => GeminiVerifier());
+
   //! Video Prediction (AI Model + backend persistence)
   sl.registerLazySingleton<VideoPredictionDataSource>(
     () => VideoPredictionDataSourceImpl(dio: Dio(), api: sl()),
   );
   sl.registerFactory(
-    () => VideoPredictionCubit(dataSource: sl(), tokenStorage: sl()),
+    () => VideoPredictionCubit(
+      dataSource: sl(),
+      tokenStorage: sl(),
+      geminiVerifier: sl(),
+    ),
   );
 
   //! Text Prediction (Sentiment AI Model + backend persistence)
@@ -124,7 +132,11 @@ Future<void> init() async {
     () => TextPredictionDataSourceImpl(dio: Dio(), api: sl()),
   );
   sl.registerFactory(
-    () => TextPredictionCubit(dataSource: sl(), tokenStorage: sl()),
+    () => TextPredictionCubit(
+      dataSource: sl(),
+      tokenStorage: sl(),
+      geminiVerifier: sl(),
+    ),
   );
 
   //! Content

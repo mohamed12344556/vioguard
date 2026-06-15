@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../data/models/video_prediction_response.dart';
+import '../presentation/cubit/video_prediction_cubit.dart';
 import '../widgets/source_content_card.dart';
 
 class VideoDetectionResultScreen extends StatelessWidget {
@@ -16,7 +18,13 @@ class VideoDetectionResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isViolent = response.isViolent;
+    // When Gemini confidently disagrees, it overrides the model's verdict.
+    final state = context.watch<VideoPredictionCubit>().state;
+    final verification =
+        state is VideoPredictionLoaded ? state.verification : null;
+    final isViolent = verification?.overridesModel == true
+        ? verification!.geminiSaysViolent
+        : response.isViolent;
     final confidencePct = (response.confidence * 100).toStringAsFixed(1);
     final violencePct = (response.violence * 100).toStringAsFixed(1);
     final nonViolencePct = (response.nonViolence * 100).toStringAsFixed(1);

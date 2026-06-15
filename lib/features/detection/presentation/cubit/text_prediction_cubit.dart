@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/api/token_storage.dart';
+import '../../data/models/gemini_verification.dart';
 import '../../data/models/text_prediction_response.dart';
+import '../../data/datasources/gemini_verifier.dart';
 import '../../data/datasources/text_prediction_datasource.dart';
 
 part 'text_prediction_state.dart';
@@ -10,10 +12,12 @@ part 'text_prediction_state.dart';
 class TextPredictionCubit extends Cubit<TextPredictionState> {
   final TextPredictionDataSource dataSource;
   final TokenStorage tokenStorage;
+  final GeminiVerifier geminiVerifier;
 
   TextPredictionCubit({
     required this.dataSource,
     required this.tokenStorage,
+    required this.geminiVerifier,
   }) : super(const TextPredictionInitial());
 
   Future<void> predict(String text) async {
@@ -43,7 +47,12 @@ class TextPredictionCubit extends Cubit<TextPredictionState> {
     }
   }
 
-  /// Runs the AI model on [text] and persists the result (best-effort).
+  /// Runs the AI model AND the Gemini verification, then persists and shows the
+  /// FINAL (possibly Gemini-corrected) result in a single step.
+  ///
+  /// The UI stays in [TextPredictionLoading] until both finish, so the result
+  /// screen opens once with the final verdict instead of flickering when the
+  /// second opinion arrives. The corrected verdict is what gets saved.
   /// When [alreadyLoading] is true the loading state was emitted by the caller.
   Future<void> _analyze(
     String text, {
@@ -54,23 +63,44 @@ class TextPredictionCubit extends Cubit<TextPredictionState> {
     try {
       final response = await dataSource.predict(text);
 
-      // Best-effort persistence to the backend history.
+      // Gemini needs the model's verdict to verify it, so this follows predict.
+      // While it runs the UI is still in Loading — both reads as "analyzing".
+      final verification = await _verify(text, response.isViolent);
+
+      // The verdict shown and saved: Gemini's when it confidently overrides.
+      final finalIsViolent = verification?.overridesModel == true
+          ? verification!.geminiSaysViolent
+          : response.isViolent;
+      // Backend expects "0" => violent, "1" => non-violent.
+      final finalResult = finalIsViolent ? '0' : '1';
+
+      // Persist the FINAL (corrected) verdict to the backend history.
       final email = tokenStorage.getUserEmail();
       if (email != null && email.isNotEmpty) {
         await dataSource.saveTextContent(
           text: text,
-          result: response.sentimentLabel,
+          result: finalResult,
           userEmail: email,
           url: url,
         );
       }
 
-      emit(TextPredictionLoaded(response));
+      // Single emit with the final, verified result — no flicker.
+      emit(TextPredictionLoaded(response, verification: verification));
     } on DioException catch (e) {
       emit(TextPredictionError(_messageFrom(e)));
     } catch (e) {
       emit(TextPredictionError(e.toString()));
     }
+  }
+
+  /// Best-effort Gemini second opinion. Returns null when disabled or on error.
+  Future<GeminiVerification?> _verify(String text, bool modelSaysViolent) async {
+    if (!geminiVerifier.isEnabled) return null;
+    return geminiVerifier.verifyText(
+      text: text,
+      modelSaysViolent: modelSaysViolent,
+    );
   }
 
   String _messageFrom(DioException e) {

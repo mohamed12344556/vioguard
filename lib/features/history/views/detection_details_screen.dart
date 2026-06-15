@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../core/theme/colors.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../core/di/injection_container.dart';
-import '../presentation/cubit/history_cubit.dart';
+import '../../../core/theme/colors.dart';
 import '../data/models/history_details_model.dart';
+import '../presentation/cubit/history_cubit.dart';
 
 class DetectionDetailsScreen extends StatelessWidget {
   final String historyId;
@@ -125,57 +127,74 @@ class _DetailsContent extends StatelessWidget {
                 Expanded(
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today_outlined,
-                          color: AppColors.textSecondaryColor(context),
-                          size: 16.sp),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        color: AppColors.textSecondaryColor(context),
+                        size: 16.sp,
+                      ),
                       SizedBox(width: 8.w),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('DATE',
-                              style: TextStyle(
-                                  color: AppColors.textLight,
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5)),
+                          Text(
+                            'DATE',
+                            style: TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                           SizedBox(height: 3.h),
-                          Text(formattedDate,
-                              style: TextStyle(
-                                  color: AppColors.textPrimaryColor(context),
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500)),
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              color: AppColors.textPrimaryColor(context),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
                 Container(
-                    width: 1,
-                    height: 36.h,
-                    color: AppColors.borderColor(context)),
+                  width: 1,
+                  height: 36.h,
+                  color: AppColors.borderColor(context),
+                ),
                 SizedBox(width: 16.w),
                 Expanded(
                   child: Row(
                     children: [
-                      Icon(Icons.access_time,
-                          color: AppColors.textSecondaryColor(context),
-                          size: 16.sp),
+                      Icon(
+                        Icons.access_time,
+                        color: AppColors.textSecondaryColor(context),
+                        size: 16.sp,
+                      ),
                       SizedBox(width: 8.w),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('TIME',
-                              style: TextStyle(
-                                  color: AppColors.textLight,
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5)),
+                          Text(
+                            'TIME',
+                            style: TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                           SizedBox(height: 3.h),
-                          Text(formattedTime,
-                              style: TextStyle(
-                                  color: AppColors.textPrimaryColor(context),
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w500)),
+                          Text(
+                            formattedTime,
+                            style: TextStyle(
+                              color: AppColors.textPrimaryColor(context),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -222,15 +241,21 @@ class _DetailsContent extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Content Type',
-                              style: TextStyle(
-                                  color: AppColors.textSecondaryColor(context),
-                                  fontSize: 12.sp)),
-                          Text(details.contentType,
-                              style: TextStyle(
-                                  color: AppColors.textPrimaryColor(context),
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600)),
+                          Text(
+                            'Content Type',
+                            style: TextStyle(
+                              color: AppColors.textSecondaryColor(context),
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                          Text(
+                            details.contentType,
+                            style: TextStyle(
+                              color: AppColors.textPrimaryColor(context),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -240,25 +265,41 @@ class _DetailsContent extends StatelessWidget {
                 // Manually-typed text has no source, so we don't fake one here.
                 if (details.url.startsWith('http')) ...[
                   SizedBox(height: 12.h),
-                  Row(
-                    children: [
-                      Icon(Icons.language,
-                          color: AppColors.primary, size: 14.sp),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Text(
-                          details.url,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                  InkWell(
+                    onTap: () => _openUrl(context, details.url),
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 4.h),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.language,
                             color: AppColors.primary,
-                            fontSize: 13.sp,
-                            decoration: TextDecoration.underline,
-                            decorationColor: AppColors.primary,
+                            size: 14.sp,
                           ),
-                        ),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              details.url,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 13.sp,
+                                decoration: TextDecoration.underline,
+                                decorationColor: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Icon(
+                            Icons.open_in_new,
+                            color: AppColors.primary,
+                            size: 14.sp,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ],
@@ -344,36 +385,38 @@ class _DetailsContent extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 14.h),
-                ...details.analysisSummary.map((line) => Padding(
-                      padding: EdgeInsets.only(bottom: 12.h),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(top: 5.h),
-                            child: Container(
-                              width: 7.w,
-                              height: 7.h,
-                              decoration: BoxDecoration(
-                                color: statusColor,
-                                shape: BoxShape.circle,
-                              ),
+                ...details.analysisSummary.map(
+                  (line) => Padding(
+                    padding: EdgeInsets.only(bottom: 12.h),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(top: 5.h),
+                          child: Container(
+                            width: 7.w,
+                            height: 7.h,
+                            decoration: BoxDecoration(
+                              color: statusColor,
+                              shape: BoxShape.circle,
                             ),
                           ),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: Text(
-                              line,
-                              style: TextStyle(
-                                color: AppColors.textPrimaryColor(context),
-                                fontSize: 14.sp,
-                                height: 1.4,
-                              ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Text(
+                            line,
+                            style: TextStyle(
+                              color: AppColors.textPrimaryColor(context),
+                              fontSize: 14.sp,
+                              height: 1.4,
                             ),
                           ),
-                        ],
-                      ),
-                    )),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -387,8 +430,11 @@ class _DetailsContent extends StatelessWidget {
                   height: 48.h,
                   child: OutlinedButton.icon(
                     onPressed: () => _showDeleteDialog(context),
-                    icon: Icon(Icons.delete_outline,
-                        size: 18.sp, color: AppColors.error),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: 18.sp,
+                      color: AppColors.error,
+                    ),
                     label: Text(
                       'Delete Report',
                       style: TextStyle(
@@ -415,6 +461,28 @@ class _DetailsContent extends StatelessWidget {
     );
   }
 
+  /// Opens [url] in an external browser, matching the result screen's
+  /// SourceContentCard behavior. Shows a snackbar if it can't be opened.
+  Future<void> _openUrl(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    bool opened = false;
+    if (uri != null) {
+      try {
+        opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        opened = false;
+      }
+    }
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not open the link'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -439,7 +507,6 @@ class _DetailsContent extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _SectionLabel extends StatelessWidget {

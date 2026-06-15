@@ -66,11 +66,10 @@ class AuthInterceptor extends Interceptor {
   ) async {
     final token = await getToken();
 
-    if (AppConfig.isProduction) {
-      // The hosting environment is guarded by HTTP Basic Auth at the web-server
-      // level and returns 401 on every request without it. It only accepts the
-      // credentials in the standard `Authorization` header (a `Proxy-Authorization`
-      // fallback was tested and rejected), so Basic auth must own that header.
+    if (AppConfig.isProduction && AppConfig.hostingUsesBasicAuth) {
+      // Legacy host (somee/trial) gates the whole site with HTTP Basic Auth and
+      // returns 401 without it. It only accepts the credentials in the standard
+      // `Authorization` header, so Basic auth must own it...
       final basic = base64Encode(
         utf8.encode(
           '${AppConfig.hostingBasicAuthUser}:${AppConfig.hostingBasicAuthPassword}',
@@ -78,15 +77,13 @@ class AuthInterceptor extends Interceptor {
       );
       options.headers['Authorization'] = 'Basic $basic';
 
-      // The API's Bearer token cannot share the `Authorization` header with the
-      // hosting Basic auth, so it travels separately. Endpoints that need it must
-      // read the token from here (the public AI/scrape endpoints do not).
+      // ...and the API's Bearer token travels separately in X-Auth-Token.
       if (token != null && token.isNotEmpty) {
         options.headers['X-Auth-Token'] = 'Bearer $token';
       }
     } else {
-      // Local dev backend has no hosting Basic-auth gate, so the JWT can use the
-      // standard `Authorization: Bearer` header the API's JwtBearer expects.
+      // Local dev and ungated hosts (e.g. MonsterASP.NET) have no Basic-auth gate,
+      // so the JWT uses the standard `Authorization: Bearer` header the API expects.
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }

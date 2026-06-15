@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vioguard/core/routes/routes.dart';
 
 import '../../../core/theme/colors.dart';
+import '../presentation/cubit/text_prediction_cubit.dart';
 import '../widgets/source_content_card.dart';
 
 class TextDetectionResultScreen extends StatelessWidget {
@@ -23,6 +25,15 @@ class TextDetectionResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // When Gemini confidently disagrees, it overrides the primary model and the
+    // whole screen (verdict, summary, bullets) reflects Gemini's verdict.
+    final state = context.watch<TextPredictionCubit>().state;
+    final verification =
+        state is TextPredictionLoaded ? state.verification : null;
+    final effectiveIsViolent = verification?.overridesModel == true
+        ? verification!.geminiSaysViolent
+        : isViolent;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
@@ -100,7 +111,7 @@ class TextDetectionResultScreen extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 10.h),
-                  _buildHighlightedText(context),
+                  _buildHighlightedText(context, effectiveIsViolent),
                 ],
               ),
             ),
@@ -158,7 +169,7 @@ class TextDetectionResultScreen extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 28.h, horizontal: 20.w),
               decoration: BoxDecoration(
-                color: isViolent
+                color: effectiveIsViolent
                     ? AppColors.error.withValues(alpha: 0.06)
                     : AppColors.success.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(16.r),
@@ -169,25 +180,29 @@ class TextDetectionResultScreen extends StatelessWidget {
                     width: 60.w,
                     height: 60.h,
                     decoration: BoxDecoration(
-                      color: isViolent
+                      color: effectiveIsViolent
                           ? AppColors.error.withValues(alpha: 0.12)
                           : AppColors.success.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isViolent ? Icons.warning_rounded : Icons.shield,
-                      color: isViolent ? AppColors.error : AppColors.success,
+                      effectiveIsViolent ? Icons.warning_rounded : Icons.shield,
+                      color: effectiveIsViolent
+                          ? AppColors.error
+                          : AppColors.success,
                       size: 30.sp,
                     ),
                   ),
                   SizedBox(height: 16.h),
                   Text(
-                    isViolent
+                    effectiveIsViolent
                         ? 'Violent Content\nDetected'
                         : 'No Violence Detected',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: isViolent ? AppColors.error : AppColors.success,
+                      color: effectiveIsViolent
+                          ? AppColors.error
+                          : AppColors.success,
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w700,
                       height: 1.3,
@@ -219,7 +234,7 @@ class TextDetectionResultScreen extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             Text(
-              isViolent
+              effectiveIsViolent
                   ? 'Our AI detected language that implies physical threat or aggressive intent.'
                   : 'Our AI engine has verified this content as safe, informative, and free of harmful intent.',
               style: TextStyle(
@@ -229,7 +244,7 @@ class TextDetectionResultScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            ..._buildBulletPoints(context),
+            ..._buildBulletPoints(context, effectiveIsViolent),
             SizedBox(height: 32.h),
             // Analyze Another Button
             SizedBox(
@@ -269,7 +284,7 @@ class TextDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightedText(BuildContext context) {
+  Widget _buildHighlightedText(BuildContext context, bool isViolent) {
     final effectiveHighlightedWords =
         highlightedWords ??
         (isViolent
@@ -337,7 +352,7 @@ class TextDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildBulletPoints(BuildContext context) {
+  List<Widget> _buildBulletPoints(BuildContext context, bool isViolent) {
     final List<Map<String, dynamic>> points;
 
     if (isViolent) {
