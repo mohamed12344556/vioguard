@@ -47,15 +47,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             size: 20.sp,
           ),
         ),
@@ -63,7 +63,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         title: Text(
           'Change Password',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -123,7 +123,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 Text(
                   'Password must be at least 8 characters and include a number or symbol.',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryColor(context),
                     fontSize: 12.sp,
                     height: 1.4,
                   ),
@@ -221,7 +221,7 @@ class _PasswordField extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
           ),
@@ -231,7 +231,7 @@ class _PasswordField extends StatelessWidget {
           controller: controller,
           obscureText: !showPassword,
           validator: validator,
-          style: TextStyle(color: AppColors.textPrimary, fontSize: 15.sp),
+          style: TextStyle(color: AppColors.textPrimaryColor(context), fontSize: 15.sp),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: AppColors.textLight, fontSize: 14.sp),
@@ -256,11 +256,11 @@ class _PasswordField extends StatelessWidget {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.borderColor(context)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.borderColor(context)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10.r),
@@ -271,7 +271,7 @@ class _PasswordField extends StatelessWidget {
               borderSide: const BorderSide(color: AppColors.error),
             ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surfaceColor(context),
           ),
         ),
       ],

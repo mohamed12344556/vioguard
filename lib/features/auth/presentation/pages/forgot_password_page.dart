@@ -38,14 +38,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             size: 20.sp,
           ),
           onPressed: () => Navigator.pop(context),
@@ -54,7 +54,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         title: Text(
           'Forgot Password',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
           ),
@@ -68,7 +68,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Divider(color: AppColors.border, height: 1),
+                Divider(color: AppColors.borderColor(context), height: 1),
                 SizedBox(height: 60.h),
                 // Lock Icon
                 Center(
@@ -91,7 +91,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 Text(
                   'Enter your email address to receive a password reset link.',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryColor(context),
                     fontSize: 16.sp,
                     height: 1.5,
                   ),
@@ -104,7 +104,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icon(
                     Icons.email_outlined,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryColor(context),
                     size: 20.sp,
                   ),
                   validator: (value) {

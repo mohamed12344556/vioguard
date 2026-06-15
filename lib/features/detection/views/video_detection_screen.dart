@@ -47,7 +47,7 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
   void _showPickerOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surfaceColor(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
@@ -111,15 +111,15 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         appBar: AppBar(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.bg(context),
           elevation: 0,
           leading: IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.arrow_back_ios,
-              color: AppColors.textPrimary,
+              color: AppColors.textPrimaryColor(context),
               size: 20.sp,
             ),
           ),
@@ -127,7 +127,7 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
           title: Text(
             'Analyze Video',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: AppColors.textPrimaryColor(context),
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
             ),
@@ -141,7 +141,7 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
               Text(
                 'Select a video to analyze for potential violence using our AI model.',
                 style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryColor(context),
                   fontSize: 14.sp,
                   height: 1.5,
                 ),
@@ -154,12 +154,12 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 32.h),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: AppColors.bg(context),
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
                       color: _selectedVideo != null
                           ? AppColors.primary
-                          : AppColors.border,
+                          : AppColors.borderColor(context),
                       width: _selectedVideo != null ? 1.5 : 1,
                     ),
                   ),
@@ -181,8 +181,8 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
                             : 'Tap to select a video',
                         style: TextStyle(
                           color: _selectedVideo != null
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
+                              ? AppColors.textPrimaryColor(context)
+                              : AppColors.textSecondaryColor(context),
                           fontSize: 14.sp,
                           fontWeight: _selectedVideo != null
                               ? FontWeight.w500
@@ -231,7 +231,7 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
                     child: Text(
                       'Our AI will analyze the video content and classify it as violent or non-violent with a confidence score.',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         fontSize: 12.sp,
                         height: 1.4,
                       ),
@@ -302,9 +302,9 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: AppColors.bg(context),
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: AppColors.borderColor(context)),
                 ),
                 child: Column(
                   children: [
@@ -318,7 +318,7 @@ class _VideoDetectionScreenState extends State<VideoDetectionScreen> {
                       'Your analysis history is encrypted and only\nvisible to you.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         fontSize: 13.sp,
                         height: 1.5,
                       ),

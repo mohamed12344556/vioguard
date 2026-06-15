@@ -45,14 +45,14 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             size: 20.sp,
           ),
           onPressed: () => Navigator.pop(context),
@@ -61,7 +61,7 @@ class _SignUpPageState extends State<SignUpPage> {
         title: Text(
           'Sign Up',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
           ),
@@ -94,7 +94,7 @@ class _SignUpPageState extends State<SignUpPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Divider(color: AppColors.border, height: 1),
+                  Divider(color: AppColors.borderColor(context), height: 1),
                   SizedBox(height: 24.h),
                   CustomTextField(
                     label: 'Full Name',
@@ -136,7 +136,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         _obscurePassword
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         size: 20.sp,
                       ),
                       onPressed: () {
@@ -168,7 +168,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         _obscureConfirmPassword
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         size: 20.sp,
                       ),
                       onPressed: () {

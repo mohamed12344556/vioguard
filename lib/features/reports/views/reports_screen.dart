@@ -34,7 +34,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
               children: [
                 Text(state.message,
                     style: TextStyle(
-                        color: AppColors.textSecondary, fontSize: 14.sp),
+                        color: AppColors.textSecondaryColor(context),
+                        fontSize: 14.sp),
                     textAlign: TextAlign.center),
                 SizedBox(height: 12.h),
                 TextButton(
@@ -73,6 +74,18 @@ class _ReportsContentState extends State<_ReportsContent> {
     _monthlyReportsEnabled = widget.report.enableMonthlyReports;
   }
 
+  @override
+  void didUpdateWidget(covariant _ReportsContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // After updateSettings -> loadDashboard, BlocBuilder rebuilds this widget
+    // with a fresh report but reuses the same State, so initState never reruns.
+    // Re-sync the toggle with the server's value so it reflects what was saved.
+    if (oldWidget.report.enableMonthlyReports !=
+        widget.report.enableMonthlyReports) {
+      _monthlyReportsEnabled = widget.report.enableMonthlyReports;
+    }
+  }
+
   String _formatNumber(int n) => NumberFormat('#,###').format(n);
 
   String _formatDate(DateTime d) => DateFormat('MMM d').format(d);
@@ -90,7 +103,7 @@ class _ReportsContentState extends State<_ReportsContent> {
           Center(
             child: Text('Reports',
                 style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryColor(context),
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600)),
           ),
@@ -105,14 +118,14 @@ class _ReportsContentState extends State<_ReportsContent> {
                   children: [
                     Text('Enable Monthly Reports',
                         style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: AppColors.textPrimaryColor(context),
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600)),
                     SizedBox(height: 4.h),
                     Text(
                         'Receive a summary of detected violent content every month',
                         style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textSecondaryColor(context),
                             fontSize: 13.sp,
                             height: 1.4)),
                   ],
@@ -133,7 +146,7 @@ class _ReportsContentState extends State<_ReportsContent> {
             ],
           ),
           SizedBox(height: 24.h),
-          Divider(color: AppColors.border, height: 1),
+          Divider(color: AppColors.borderColor(context), height: 1),
           SizedBox(height: 20.h),
 
           // Violence percentage
@@ -142,10 +155,11 @@ class _ReportsContentState extends State<_ReportsContent> {
             children: [
               Text('Violence Detected',
                   style: TextStyle(
-                      color: AppColors.textSecondary, fontSize: 14.sp)),
+                      color: AppColors.textSecondaryColor(context),
+                      fontSize: 14.sp)),
               Text('${percentage.toStringAsFixed(0)}%',
                   style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryColor(context),
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700)),
             ],
@@ -155,7 +169,7 @@ class _ReportsContentState extends State<_ReportsContent> {
             borderRadius: BorderRadius.circular(6.r),
             child: LinearProgressIndicator(
               value: percentage / 100,
-              backgroundColor: AppColors.border,
+              backgroundColor: AppColors.borderColor(context),
               valueColor:
                   AlwaysStoppedAnimation<Color>(
                     percentage > 50 ? AppColors.error : AppColors.success),
@@ -295,13 +309,13 @@ class _SummarySection extends StatelessWidget {
       children: [
         Text(title,
             style: TextStyle(
-                color: AppColors.textPrimary,
+                color: AppColors.textPrimaryColor(context),
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700)),
         SizedBox(height: 12.h),
         Text(description,
             style: TextStyle(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryColor(context),
                 fontSize: 14.sp,
                 height: 1.4)),
         SizedBox(height: 12.h),
@@ -313,7 +327,8 @@ class _SummarySection extends StatelessWidget {
                   SizedBox(width: 8.w),
                   Text(item.label,
                       style: TextStyle(
-                          color: AppColors.textSecondary, fontSize: 14.sp)),
+                          color: AppColors.textSecondaryColor(context),
+                          fontSize: 14.sp)),
                   SizedBox(width: 4.w),
                   Text(item.value,
                       style: TextStyle(

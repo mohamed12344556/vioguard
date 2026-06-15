@@ -64,23 +64,32 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // The hosting environment is guarded by HTTP Basic Auth at the web-server
-    // level and returns 401 on every request without it. It only accepts the
-    // credentials in the standard `Authorization` header (a `Proxy-Authorization`
-    // fallback was tested and rejected), so Basic auth must own that header.
-    final basic = base64Encode(
-      utf8.encode(
-        '${AppConfig.hostingBasicAuthUser}:${AppConfig.hostingBasicAuthPassword}',
-      ),
-    );
-    options.headers['Authorization'] = 'Basic $basic';
-
-    // The API's Bearer token cannot share the `Authorization` header with the
-    // hosting Basic auth, so it travels separately. Endpoints that need it must
-    // read the token from here (the public AI/scrape endpoints do not).
     final token = await getToken();
-    if (token != null && token.isNotEmpty) {
-      options.headers['X-Auth-Token'] = 'Bearer $token';
+
+    if (AppConfig.isProduction) {
+      // The hosting environment is guarded by HTTP Basic Auth at the web-server
+      // level and returns 401 on every request without it. It only accepts the
+      // credentials in the standard `Authorization` header (a `Proxy-Authorization`
+      // fallback was tested and rejected), so Basic auth must own that header.
+      final basic = base64Encode(
+        utf8.encode(
+          '${AppConfig.hostingBasicAuthUser}:${AppConfig.hostingBasicAuthPassword}',
+        ),
+      );
+      options.headers['Authorization'] = 'Basic $basic';
+
+      // The API's Bearer token cannot share the `Authorization` header with the
+      // hosting Basic auth, so it travels separately. Endpoints that need it must
+      // read the token from here (the public AI/scrape endpoints do not).
+      if (token != null && token.isNotEmpty) {
+        options.headers['X-Auth-Token'] = 'Bearer $token';
+      }
+    } else {
+      // Local dev backend has no hosting Basic-auth gate, so the JWT can use the
+      // standard `Authorization: Bearer` header the API's JwtBearer expects.
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
     }
 
     // ngrok free tier returns an interstitial HTML page unless this header

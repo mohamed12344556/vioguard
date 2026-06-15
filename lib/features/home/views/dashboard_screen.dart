@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../core/routes/routes.dart';
 import '../../../core/theme/colors.dart';
@@ -34,21 +31,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: Text(
           'Exit App',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 17.sp,
             fontWeight: FontWeight.w600,
           ),
         ),
         content: Text(
           'Are you sure you want to exit VioGuard?',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
+          style: TextStyle(
+            color: AppColors.textSecondaryColor(context),
+            fontSize: 14.sp,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               'Cancel',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
+              style: TextStyle(
+                color: AppColors.textSecondaryColor(context),
+                fontSize: 14.sp,
+              ),
             ),
           ),
           ElevatedButton(
@@ -83,7 +86,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (!didPop) _showExitDialog();
       },
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         resizeToAvoidBottomInset: true,
         body: SafeArea(
           child: IndexedStack(
@@ -104,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surfaceColor(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -116,9 +119,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.surfaceColor(context),
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
+        unselectedItemColor: AppColors.textSecondaryColor(context),
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         selectedFontSize: 12.sp,
@@ -150,8 +153,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-enum _DetectMode { video, text }
-
 class _HomeContent extends StatefulWidget {
   const _HomeContent();
 
@@ -160,21 +161,25 @@ class _HomeContent extends StatefulWidget {
 }
 
 class _HomeContentState extends State<_HomeContent> {
-  final ImagePicker _picker = ImagePicker();
-  final TextEditingController _textController = TextEditingController();
-  _DetectMode _mode = _DetectMode.video;
-  File? _selectedVideo;
-  String? _fileName;
+  final TextEditingController _inputController = TextEditingController();
 
   /// Cached so dispose() can reset the cubits without an unsafe context lookup
   /// on a deactivated widget.
   late VideoPredictionCubit _videoCubit;
   late TextPredictionCubit _textCubit;
 
+  /// Matches a URL ending in a known video file extension (optionally followed
+  /// by a query string), e.g. `https://cdn.media/clip.mp4?token=...`.
+  static final RegExp _videoUrlPattern = RegExp(
+    r'\.(mp4|mov|avi|mkv|webm|m4v|flv|wmv|3gp)(\?.*)?$',
+    caseSensitive: false,
+  );
+  static final RegExp _urlPattern = RegExp(r'^https?://', caseSensitive: false);
+
   @override
   void initState() {
     super.initState();
-    _textController.addListener(_onTextChanged);
+    _inputController.addListener(_onInputChanged);
     context.read<HistoryCubit>().loadHistory();
   }
 
@@ -185,85 +190,47 @@ class _HomeContentState extends State<_HomeContent> {
     _textCubit = context.read<TextPredictionCubit>();
   }
 
-  void _onTextChanged() => setState(() {});
+  void _onInputChanged() => setState(() {});
 
   @override
   void dispose() {
-    _textController.removeListener(_onTextChanged);
-    _textController.dispose();
+    _inputController.removeListener(_onInputChanged);
+    _inputController.dispose();
     _videoCubit.reset();
     _textCubit.reset();
     super.dispose();
   }
 
-  void _selectMode(_DetectMode mode) {
-    if (_mode == mode) return;
-    setState(() => _mode = mode);
-  }
+  /// Detects whether the input is a URL, and if so whether it points at a video.
+  bool get _isUrl => _urlPattern.hasMatch(_inputController.text.trim());
+  bool get _isVideoUrl =>
+      _videoUrlPattern.hasMatch(_inputController.text.trim());
 
-  Future<void> _pickVideo(ImageSource source) async {
-    final XFile? video = await _picker.pickVideo(
-      source: source,
-      maxDuration: const Duration(minutes: 5),
-    );
-    if (video != null) {
-      setState(() {
-        _selectedVideo = File(video.path);
-        _fileName = video.name;
-      });
-    }
-  }
+  /// The URL last submitted for analysis, forwarded to the result screen's
+  /// "source" card. Null when the user analyzed raw (non-URL) text.
+  String? _lastSourceUrl;
 
-  void _showPickerOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(Icons.video_library, color: AppColors.primary),
-                title: const Text('Choose from Gallery'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickVideo(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.videocam, color: AppColors.primary),
-                title: const Text('Record Video'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickVideo(ImageSource.camera);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
+  /// Routes the input to the right model: a video URL is scraped + analyzed by
+  /// the video model, any other URL is scraped + analyzed as text, and raw text
+  /// goes straight to the text model. The AI decides the content type for us.
   void _detectViolence() {
-    if (_mode == _DetectMode.video) {
-      if (_selectedVideo == null) return;
-      context.read<VideoPredictionCubit>().predict(_selectedVideo!.path);
+    final input = _inputController.text.trim();
+    if (input.isEmpty) return;
+
+    if (_isUrl) {
+      _lastSourceUrl = input;
+      if (_isVideoUrl) {
+        _videoCubit.predictFromUrl(input);
+      } else {
+        _textCubit.predictFromUrl(input);
+      }
     } else {
-      final text = _textController.text.trim();
-      if (text.isEmpty) return;
-      context.read<TextPredictionCubit>().predict(text);
+      _lastSourceUrl = null;
+      _textCubit.predict(input);
     }
   }
 
-  bool get _canDetect => _mode == _DetectMode.video
-      ? _selectedVideo != null
-      : _textController.text.trim().isNotEmpty;
+  bool get _canDetect => _inputController.text.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -275,12 +242,12 @@ class _HomeContentState extends State<_HomeContent> {
               Navigator.pushNamed(
                 context,
                 Routes.videoDetectionResult,
-                arguments: state.response,
+                arguments: {
+                  'response': state.response,
+                  'sourceUrl': _lastSourceUrl,
+                },
               );
-              setState(() {
-                _selectedVideo = null;
-                _fileName = null;
-              });
+              _inputController.clear();
               context.read<HistoryCubit>().loadHistory();
             } else if (state is VideoPredictionError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -299,12 +266,15 @@ class _HomeContentState extends State<_HomeContent> {
                 context,
                 Routes.textDetectionResult,
                 arguments: {
-                  'text': _textController.text,
+                  'text': state.response.originalText.isNotEmpty
+                      ? state.response.originalText
+                      : _inputController.text,
                   'cleanedText': state.response.cleanedText,
                   'isViolent': state.response.isViolent,
+                  'sourceUrl': _lastSourceUrl,
                 },
               );
-              _textController.clear();
+              _inputController.clear();
               context.read<HistoryCubit>().loadHistory();
             } else if (state is TextPredictionError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -355,141 +325,73 @@ class _HomeContentState extends State<_HomeContent> {
             ),
             SizedBox(height: 20.h),
             Text(
-              _mode == _DetectMode.video
-                  ? 'Upload a video to analyze its content for potential violence or harmful themes.'
-                  : 'Paste or type text to analyze it for potential violence or harmful themes.',
+              'Paste a link to analyze text or video content for '
+              'potential violence or harmful themes.',
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryColor(context),
                 fontSize: 14.sp,
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 16.h),
-            // Mode selector (Video / Text)
+            SizedBox(height: 20.h),
+            // Unified input: paste a URL or type text. The AI auto-detects
+            // whether it is a video link, an article link, or raw text.
             Container(
-              padding: EdgeInsets.all(4.w),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.surfaceColor(context),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  _ModeTab(
-                    label: 'Video',
-                    icon: Icons.videocam_outlined,
-                    isSelected: _mode == _DetectMode.video,
-                    onTap: () => _selectMode(_DetectMode.video),
-                  ),
-                  _ModeTab(
-                    label: 'Text',
-                    icon: Icons.description_outlined,
-                    isSelected: _mode == _DetectMode.text,
-                    onTap: () => _selectMode(_DetectMode.text),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 16.h),
-            // Input area: video picker or text field
-            if (_mode == _DetectMode.video)
-              GestureDetector(
-                onTap: _showPickerOptions,
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 32.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color: _selectedVideo != null
-                          ? AppColors.primary
-                          : AppColors.border,
-                      width: _selectedVideo != null ? 1.5 : 1,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        _selectedVideo != null
-                            ? Icons.videocam
-                            : Icons.cloud_upload_outlined,
-                        color: _selectedVideo != null
-                            ? AppColors.primary
-                            : AppColors.textLight,
-                        size: 40.sp,
-                      ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        _selectedVideo != null
-                            ? _fileName ?? 'Video selected'
-                            : 'Tap to select a video',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: _selectedVideo != null
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
-                          fontSize: 14.sp,
-                          fontWeight: _selectedVideo != null
-                              ? FontWeight.w500
-                              : FontWeight.w400,
-                        ),
-                      ),
-                      if (_selectedVideo == null) ...[
-                        SizedBox(height: 4.h),
-                        Text(
-                          'Gallery or Camera',
-                          style: TextStyle(
-                            color: AppColors.textLight,
-                            fontSize: 12.sp,
-                          ),
-                        ),
-                      ],
-                      if (_selectedVideo != null) ...[
-                        SizedBox(height: 8.h),
-                        TextButton(
-                          onPressed: _showPickerOptions,
-                          child: Text(
-                            'Change video',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 13.sp,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                border: Border.all(
+                  color: _canDetect
+                      ? AppColors.primary
+                      : AppColors.borderColor(context),
+                  width: _canDetect ? 1.5 : 1,
                 ),
-              )
-            else
-              // Text input
-              TextField(
-                controller: _textController,
-                maxLines: 6,
+              ),
+              child: TextField(
+                controller: _inputController,
+                minLines: 1,
+                maxLines: 5,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+                style: TextStyle(
+                  color: AppColors.textPrimaryColor(context),
+                  fontSize: 15.sp,
+                ),
                 decoration: InputDecoration(
-                  hintText: 'Enter text here...',
+                  hintText: 'Paste URL or text here...',
                   hintStyle: TextStyle(
                     color: AppColors.textLight,
-                    fontSize: 14.sp,
+                    fontSize: 15.sp,
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: AppColors.border),
+                  prefixIcon: Padding(
+                    padding: EdgeInsets.only(left: 14.w, right: 10.w),
+                    child: Icon(
+                      _isUrl ? Icons.link : Icons.notes_outlined,
+                      color: _canDetect
+                          ? AppColors.primary
+                          : AppColors.textLight,
+                      size: 22.sp,
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: AppColors.border),
+                  prefixIconConstraints: BoxConstraints(
+                    minWidth: 0,
+                    minHeight: 0,
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                    borderSide: BorderSide(color: AppColors.primary),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.primary.withValues(alpha: 0.03),
+                  suffixIcon: _canDetect
+                      ? IconButton(
+                          onPressed: () => _inputController.clear(),
+                          icon: Icon(
+                            Icons.close,
+                            color: AppColors.textSecondaryColor(context),
+                            size: 20.sp,
+                          ),
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 18.h),
                 ),
-                style: TextStyle(color: AppColors.textPrimary, fontSize: 14.sp),
               ),
+            ),
             SizedBox(height: 12.h),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,11 +400,10 @@ class _HomeContentState extends State<_HomeContent> {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    _mode == _DetectMode.video
-                        ? 'Our AI will analyze the video content and classify it as violent or non-violent with a confidence score.'
-                        : 'Our AI will analyze the text and classify it as violent or non-violent. Supported languages: English.',
+                    'Our AI will automatically detect whether the content is '
+                    'text or video and scan for safety violations.',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryColor(context),
                       fontSize: 12.sp,
                       height: 1.4,
                     ),
@@ -511,49 +412,57 @@ class _HomeContentState extends State<_HomeContent> {
               ],
             ),
             SizedBox(height: 16.h),
-            // Detect Button
+            // Detect Button — listens to the input controller directly so the
+            // enabled/disabled state flips on every keystroke, and to both
+            // cubits so it shows a spinner while analyzing.
             BlocBuilder<VideoPredictionCubit, VideoPredictionState>(
               builder: (context, videoState) {
                 final isLoading =
                     videoState is VideoPredictionLoading ||
                     context.watch<TextPredictionCubit>().state
                         is TextPredictionLoading;
-                return SizedBox(
-                  width: double.infinity,
-                  height: 52.h,
-                  child: ElevatedButton(
-                    onPressed: _canDetect && !isLoading
-                        ? _detectViolence
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      disabledBackgroundColor: AppColors.primary.withValues(
-                        alpha: 0.4,
-                      ),
-                      foregroundColor: Colors.white,
-                      disabledForegroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: isLoading
-                        ? SizedBox(
-                            width: 22.w,
-                            height: 22.h,
-                            child: const CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : Text(
-                            'Detect Violence',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
+                return ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _inputController,
+                  builder: (context, value, _) {
+                    final canDetect = value.text.trim().isNotEmpty;
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 52.h,
+                      child: ElevatedButton(
+                        onPressed: canDetect && !isLoading
+                            ? _detectViolence
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          disabledBackgroundColor: AppColors.primary.withValues(
+                            alpha: 0.4,
                           ),
-                  ),
+                          foregroundColor: Colors.white,
+                          disabledForegroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.r),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: isLoading
+                            ? SizedBox(
+                                width: 22.w,
+                                height: 22.h,
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : Text(
+                                'Detect Violence',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -571,7 +480,7 @@ class _HomeContentState extends State<_HomeContent> {
                           Text(
                             'Recent Links',
                             style: TextStyle(
-                              color: AppColors.textPrimary,
+                              color: AppColors.textPrimaryColor(context),
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
                             ),
@@ -626,9 +535,9 @@ class _HomeContentState extends State<_HomeContent> {
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.bg(context),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderColor(context)),
               ),
               child: Column(
                 children: [
@@ -642,7 +551,7 @@ class _HomeContentState extends State<_HomeContent> {
                     'Your analysis history is encrypted and only\nvisible to you.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryColor(context),
                       fontSize: 13.sp,
                       height: 1.5,
                     ),
@@ -652,56 +561,6 @@ class _HomeContentState extends State<_HomeContent> {
             ),
             SizedBox(height: 16.h),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ModeTab extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ModeTab({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.symmetric(vertical: 10.h),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 18.sp,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
-              SizedBox(width: 6.w),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
-                  fontSize: 14.sp,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -735,9 +594,9 @@ class _RecentLinkCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.surfaceColor(context),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderColor(context)),
         ),
         child: Row(
           children: [
@@ -766,7 +625,7 @@ class _RecentLinkCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryColor(context),
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w500,
                     ),

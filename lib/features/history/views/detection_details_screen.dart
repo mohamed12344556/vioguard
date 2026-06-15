@@ -16,15 +16,15 @@ class DetectionDetailsScreen extends StatelessWidget {
     return BlocProvider(
       create: (_) => sl<HistoryDetailsCubit>()..loadDetails(historyId),
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         appBar: AppBar(
-          backgroundColor: AppColors.surface,
+          backgroundColor: AppColors.bg(context),
           elevation: 0,
           leading: IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.arrow_back_ios,
-              color: AppColors.textPrimary,
+              color: AppColors.textPrimaryColor(context),
               size: 20.sp,
             ),
           ),
@@ -32,7 +32,7 @@ class DetectionDetailsScreen extends StatelessWidget {
           title: Text(
             'Detection Details',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: AppColors.textPrimaryColor(context),
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
             ),
@@ -51,7 +51,7 @@ class DetectionDetailsScreen extends StatelessWidget {
                     Text(
                       state.message,
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         fontSize: 14.sp,
                       ),
                       textAlign: TextAlign.center,
@@ -116,9 +116,9 @@ class _DetailsContent extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.surfaceColor(context),
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.borderColor(context)),
             ),
             child: Row(
               children: [
@@ -126,7 +126,8 @@ class _DetailsContent extends StatelessWidget {
                   child: Row(
                     children: [
                       Icon(Icons.calendar_today_outlined,
-                          color: AppColors.textSecondary, size: 16.sp),
+                          color: AppColors.textSecondaryColor(context),
+                          size: 16.sp),
                       SizedBox(width: 8.w),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +141,7 @@ class _DetailsContent extends StatelessWidget {
                           SizedBox(height: 3.h),
                           Text(formattedDate,
                               style: TextStyle(
-                                  color: AppColors.textPrimary,
+                                  color: AppColors.textPrimaryColor(context),
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w500)),
                         ],
@@ -148,13 +149,17 @@ class _DetailsContent extends StatelessWidget {
                     ],
                   ),
                 ),
-                Container(width: 1, height: 36.h, color: AppColors.border),
+                Container(
+                    width: 1,
+                    height: 36.h,
+                    color: AppColors.borderColor(context)),
                 SizedBox(width: 16.w),
                 Expanded(
                   child: Row(
                     children: [
                       Icon(Icons.access_time,
-                          color: AppColors.textSecondary, size: 16.sp),
+                          color: AppColors.textSecondaryColor(context),
+                          size: 16.sp),
                       SizedBox(width: 8.w),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +173,7 @@ class _DetailsContent extends StatelessWidget {
                           SizedBox(height: 3.h),
                           Text(formattedTime,
                               style: TextStyle(
-                                  color: AppColors.textPrimary,
+                                  color: AppColors.textPrimaryColor(context),
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w500)),
                         ],
@@ -188,9 +193,9 @@ class _DetailsContent extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AppColors.surfaceColor(context),
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.borderColor(context)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,11 +224,11 @@ class _DetailsContent extends StatelessWidget {
                         children: [
                           Text('Content Type',
                               style: TextStyle(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.textSecondaryColor(context),
                                   fontSize: 12.sp)),
                           Text(details.contentType,
                               style: TextStyle(
-                                  color: AppColors.textPrimary,
+                                  color: AppColors.textPrimaryColor(context),
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600)),
                         ],
@@ -231,30 +236,59 @@ class _DetailsContent extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 12.h),
-                Row(
-                  children: [
-                    Icon(Icons.language, color: AppColors.primary, size: 14.sp),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        details.url,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 13.sp,
-                          decoration: TextDecoration.underline,
-                          decorationColor: AppColors.primary,
+                // Only show a source link when the content actually came from a URL.
+                // Manually-typed text has no source, so we don't fake one here.
+                if (details.url.startsWith('http')) ...[
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Icon(Icons.language,
+                          color: AppColors.primary, size: 14.sp),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          details.url,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 13.sp,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.primary,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
           SizedBox(height: 20.h),
+
+          // ANALYZED CONTENT (the text the user actually typed/analyzed)
+          if (!isVideo && details.extractedTextContext.trim().isNotEmpty) ...[
+            _SectionLabel(label: 'ANALYZED CONTENT'),
+            SizedBox(height: 10.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceColor(context),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.borderColor(context)),
+              ),
+              child: Text(
+                details.extractedTextContext,
+                style: TextStyle(
+                  color: AppColors.textPrimaryColor(context),
+                  fontSize: 14.sp,
+                  height: 1.5,
+                ),
+              ),
+            ),
+            SizedBox(height: 20.h),
+          ],
 
           // CURRENT STATUS
           _SectionLabel(label: 'CURRENT STATUS'),
@@ -294,7 +328,7 @@ class _DetailsContent extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: AppColors.bg(context),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Column(
@@ -303,7 +337,7 @@ class _DetailsContent extends StatelessWidget {
                 Text(
                   'ANALYSIS SUMMARY',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryColor(context),
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
@@ -331,7 +365,7 @@ class _DetailsContent extends StatelessWidget {
                             child: Text(
                               line,
                               style: TextStyle(
-                                color: AppColors.textPrimary,
+                                color: AppColors.textPrimaryColor(context),
                                 fontSize: 14.sp,
                                 height: 1.4,
                               ),
@@ -365,7 +399,7 @@ class _DetailsContent extends StatelessWidget {
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
-                      side: BorderSide(color: AppColors.border),
+                      side: BorderSide(color: AppColors.borderColor(context)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
@@ -418,7 +452,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       label,
       style: TextStyle(
-        color: AppColors.textSecondary,
+        color: AppColors.textSecondaryColor(context),
         fontSize: 11.sp,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.6,

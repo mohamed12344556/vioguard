@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       body: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
@@ -91,7 +91,7 @@ class _LoginPageState extends State<LoginPage> {
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: Icon(
                       Icons.email_outlined,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryColor(context),
                       size: 20.sp,
                     ),
                     validator: (value) {
@@ -113,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
                     obscureText: _obscurePassword,
                     prefixIcon: Icon(
                       Icons.lock_outline,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryColor(context),
                       size: 20.sp,
                     ),
                     suffixIcon: IconButton(
@@ -121,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                         _obscurePassword
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         size: 20.sp,
                       ),
                       onPressed: _togglePasswordVisibility,
@@ -169,7 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                       Text(
                         "Don't have an account?",
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: AppColors.textSecondaryColor(context),
                           fontSize: 14.sp,
                         ),
                       ),

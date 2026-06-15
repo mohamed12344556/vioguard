@@ -42,14 +42,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             size: 20.sp,
           ),
           onPressed: () => Navigator.pop(context),
@@ -58,7 +58,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         title: Text(
           'Reset Password',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
           ),
@@ -72,7 +72,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Divider(color: AppColors.border, height: 1),
+                Divider(color: AppColors.borderColor(context), height: 1),
                 SizedBox(height: 60.h),
                 // Lock Icon
                 Center(
@@ -95,7 +95,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 Text(
                   'Create a new password for your account.',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryColor(context),
                     fontSize: 16.sp,
                     height: 1.5,
                   ),
@@ -109,7 +109,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   obscureText: _obscureNewPassword,
                   prefixIcon: Icon(
                     Icons.lock_outline,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryColor(context),
                     size: 20.sp,
                   ),
                   suffixIcon: IconButton(
@@ -117,7 +117,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       _obscureNewPassword
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryColor(context),
                       size: 20.sp,
                     ),
                     onPressed: () {
@@ -146,7 +146,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   obscureText: _obscureConfirmPassword,
                   prefixIcon: Icon(
                     Icons.lock_outline,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryColor(context),
                     size: 20.sp,
                   ),
                   suffixIcon: IconButton(
@@ -154,7 +154,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       _obscureConfirmPassword
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryColor(context),
                       size: 20.sp,
                     ),
                     onPressed: () {
@@ -177,7 +177,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 Text(
                   'Password must be at least 8 characters and include a number or symbol.',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryColor(context),
                     fontSize: 12.sp,
                     height: 1.5,
                   ),

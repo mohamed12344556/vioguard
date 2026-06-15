@@ -72,15 +72,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             size: 20.sp,
           ),
         ),
@@ -88,7 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: Text(
           'Edit Profile',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -123,9 +123,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   width: double.infinity,
                   padding: EdgeInsets.all(20.w),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: AppColors.surfaceColor(context),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: AppColors.borderColor(context)),
                   ),
                   child: Column(
                     children: [
@@ -158,10 +158,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 width: 26.w,
                                 height: 26.h,
                                 decoration: BoxDecoration(
-                                  color: AppColors.surface,
+                                  color: AppColors.surfaceColor(context),
                                   shape: BoxShape.circle,
                                   border:
-                                      Border.all(color: AppColors.border),
+                                      Border.all(color: AppColors.borderColor(context)),
                                 ),
                                 child: Icon(Icons.edit,
                                     color: AppColors.primary, size: 13.sp),
@@ -179,7 +179,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           child: Text(
                             'Edit Picture',
                             style: TextStyle(
-                              color: AppColors.textSecondary,
+                              color: AppColors.textSecondaryColor(context),
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w500,
                             ),
@@ -249,7 +249,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.border),
+                      side: BorderSide(color: AppColors.borderColor(context)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.r),
                       ),
@@ -288,23 +288,23 @@ class _EditableField extends StatelessWidget {
       children: [
         Text(label,
             style:
-                TextStyle(color: AppColors.textSecondary, fontSize: 13.sp)),
+                TextStyle(color: AppColors.textSecondaryColor(context), fontSize: 13.sp)),
         SizedBox(height: 6.h),
         TextFormField(
           controller: controller,
           validator: validator,
           style:
-              TextStyle(color: AppColors.textPrimary, fontSize: 15.sp),
+              TextStyle(color: AppColors.textPrimaryColor(context), fontSize: 15.sp),
           decoration: InputDecoration(
             contentPadding:
                 EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.borderColor(context)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: AppColors.borderColor(context)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10.r),
@@ -317,7 +317,7 @@ class _EditableField extends StatelessWidget {
             suffixIcon:
                 Icon(Icons.edit_outlined, color: AppColors.primary, size: 18.sp),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surfaceColor(context),
           ),
         ),
       ],
@@ -338,19 +338,19 @@ class _ReadonlyField extends StatelessWidget {
       children: [
         Text(label,
             style:
-                TextStyle(color: AppColors.textSecondary, fontSize: 13.sp)),
+                TextStyle(color: AppColors.textSecondaryColor(context), fontSize: 13.sp)),
         SizedBox(height: 6.h),
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: AppColors.bg(context),
             borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.borderColor(context)),
           ),
           child: Text(controller.text,
               style: TextStyle(
-                  color: AppColors.textSecondary, fontSize: 15.sp)),
+                  color: AppColors.textSecondaryColor(context), fontSize: 15.sp)),
         ),
       ],
     );

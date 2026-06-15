@@ -83,15 +83,15 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
         }
       },
       child: Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             size: 20.sp,
           ),
         ),
@@ -99,7 +99,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
         title: Text(
           'Text Detection',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -115,9 +115,9 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
               width: double.infinity,
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: AppColors.surfaceColor(context),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderColor(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +126,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                     children: [
                       Icon(
                         Icons.description_outlined,
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         size: 20.sp,
                       ),
                       SizedBox(width: 8.w),
@@ -134,7 +134,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                         child: Text(
                           'Paste a link or type the text you want to analyze for violent content',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textSecondaryColor(context),
                             fontSize: 14.sp,
                           ),
                         ),
@@ -153,11 +153,11 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.r),
-                        borderSide: BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.borderColor(context)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.r),
-                        borderSide: BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.borderColor(context)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.r),
@@ -167,7 +167,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                       fillColor: AppColors.primary.withValues(alpha: 0.03),
                     ),
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryColor(context),
                       fontSize: 14.sp,
                     ),
                   ),
@@ -187,7 +187,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                 Text(
                   'Supported languages: English',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondaryColor(context),
                     fontSize: 13.sp,
                   ),
                 ),

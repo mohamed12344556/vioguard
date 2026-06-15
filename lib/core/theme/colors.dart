@@ -21,9 +21,16 @@ class AppColors {
 
   // Background Colors
   static const Color background = Color(0xFFF8F9FA);
-  static const Color backgroundDark = Color(0xFF1A1A2E);
+  static const Color backgroundDark = Color(0xFF0A0E1A);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceDark = Color(0xFF16213E);
+  static const Color surfaceDark = Color(0xFF131A2E);
+
+  /// Slightly lighter dark surface for nested cards / inputs that need to read
+  /// above [surfaceDark] (e.g. the URL input on the dashboard).
+  static const Color surfaceDarkElevated = Color(0xFF1A2138);
+
+  /// Subtle border/outline used on dark surfaces.
+  static const Color borderDark = Color(0xFF252D45);
 
   // Text Colors
   static const Color textPrimary = Color(0xFF2D3436);
@@ -65,4 +72,39 @@ class AppColors {
     end: Alignment.bottomRight,
     colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
   );
+
+  // ---------------------------------------------------------------------------
+  // Theme-aware resolvers
+  //
+  // Use these inside widgets (they need a [BuildContext]) so colors adapt to
+  // light/dark mode. The plain constants above remain the light-mode values and
+  // are still valid for brand colors that don't change between modes
+  // (primary, secondary, error, success, ...).
+  // ---------------------------------------------------------------------------
+
+  static bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  /// Scaffold / page background.
+  static Color bg(BuildContext context) =>
+      _isDark(context) ? backgroundDark : background;
+
+  /// Card / elevated surface background.
+  static Color surfaceColor(BuildContext context) =>
+      _isDark(context) ? surfaceDark : surface;
+
+  /// Primary, high-emphasis text.
+  static Color textPrimaryColor(BuildContext context) =>
+      _isDark(context) ? textLight : textPrimary;
+
+  /// Secondary, lower-emphasis text. (Same value works in both modes.)
+  static Color textSecondaryColor(BuildContext context) => textSecondary;
+
+  /// Borders / outlines.
+  static Color borderColor(BuildContext context) =>
+      _isDark(context) ? borderDark : border;
+
+  /// Dividers.
+  static Color dividerColor(BuildContext context) =>
+      _isDark(context) ? borderDark : divider;
 }

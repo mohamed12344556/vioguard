@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:vioguard/core/routes/routes.dart';
+
 import '../../../core/theme/colors.dart';
-import '../../../core/routes/routes.dart';
+import '../widgets/source_content_card.dart';
 
 class TextDetectionResultScreen extends StatelessWidget {
   final String analyzedText;
   final String? cleanedText;
   final bool isViolent;
   final List<String>? highlightedWords;
+  final String? sourceUrl;
 
   const TextDetectionResultScreen({
     super.key,
@@ -15,20 +18,21 @@ class TextDetectionResultScreen extends StatelessWidget {
     this.cleanedText,
     required this.isViolent,
     this.highlightedWords,
+    this.sourceUrl,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             size: 20.sp,
           ),
         ),
@@ -36,7 +40,7 @@ class TextDetectionResultScreen extends StatelessWidget {
         title: Text(
           'Detection Result',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -46,7 +50,7 @@ class TextDetectionResultScreen extends StatelessWidget {
             onPressed: () {},
             icon: Icon(
               Icons.more_vert,
-              color: AppColors.textPrimary,
+              color: AppColors.textPrimaryColor(context),
               size: 22.sp,
             ),
           ),
@@ -57,6 +61,11 @@ class TextDetectionResultScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Source card (only present when analysis came from a URL)
+            if (sourceUrl != null && sourceUrl!.isNotEmpty) ...[
+              SourceContentCard(url: sourceUrl, isVideo: false),
+              SizedBox(height: 20.h),
+            ],
             // Analyzed Text Card
             Container(
               width: double.infinity,
@@ -65,7 +74,8 @@ class TextDetectionResultScreen extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.15)),
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +100,7 @@ class TextDetectionResultScreen extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 10.h),
-                  _buildHighlightedText(),
+                  _buildHighlightedText(context),
                 ],
               ),
             ),
@@ -103,9 +113,9 @@ class TextDetectionResultScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: AppColors.bg(context),
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: AppColors.borderColor(context)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,14 +124,14 @@ class TextDetectionResultScreen extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.auto_fix_high,
-                          color: AppColors.textSecondary,
+                          color: AppColors.textSecondaryColor(context),
                           size: 18.sp,
                         ),
                         SizedBox(width: 6.w),
                         Text(
                           'PROCESSED TEXT',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textSecondaryColor(context),
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
@@ -133,7 +143,7 @@ class TextDetectionResultScreen extends StatelessWidget {
                     Text(
                       cleanedText!.trim(),
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: AppColors.textPrimaryColor(context),
                         fontSize: 14.sp,
                         height: 1.6,
                       ),
@@ -192,14 +202,14 @@ class TextDetectionResultScreen extends StatelessWidget {
               children: [
                 Icon(
                   Icons.info_outline,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryColor(context),
                   size: 18.sp,
                 ),
                 SizedBox(width: 6.w),
                 Text(
                   'ANALYSIS SUMMARY',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryColor(context),
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
@@ -213,13 +223,13 @@ class TextDetectionResultScreen extends StatelessWidget {
                   ? 'Our AI detected language that implies physical threat or aggressive intent.'
                   : 'Our AI engine has verified this content as safe, informative, and free of harmful intent.',
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryColor(context),
                 fontSize: 14.sp,
                 height: 1.5,
               ),
             ),
             SizedBox(height: 16.h),
-            ..._buildBulletPoints(),
+            ..._buildBulletPoints(context),
             SizedBox(height: 32.h),
             // Analyze Another Button
             SizedBox(
@@ -227,7 +237,13 @@ class TextDetectionResultScreen extends StatelessWidget {
               height: 52.h,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, Routes.textDetection);
+                  // Return to the Home/dashboard (the first route) rather than
+                  // opening a separate detection screen.
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    Routes.home,
+                    (route) => false,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -253,8 +269,9 @@ class TextDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightedText() {
-    final effectiveHighlightedWords = highlightedWords ??
+  Widget _buildHighlightedText(BuildContext context) {
+    final effectiveHighlightedWords =
+        highlightedWords ??
         (isViolent
             ? [
                 'kill',
@@ -276,7 +293,7 @@ class TextDetectionResultScreen extends StatelessWidget {
       return Text(
         '"$analyzedText"',
         style: TextStyle(
-          color: AppColors.textPrimary,
+          color: AppColors.textPrimaryColor(context),
           fontSize: 14.sp,
           height: 1.6,
           fontStyle: FontStyle.italic,
@@ -288,7 +305,7 @@ class TextDetectionResultScreen extends StatelessWidget {
     return RichText(
       text: TextSpan(
         style: TextStyle(
-          color: AppColors.textPrimary,
+          color: AppColors.textPrimaryColor(context),
           fontSize: 14.sp,
           height: 1.6,
           fontStyle: FontStyle.italic,
@@ -296,16 +313,17 @@ class TextDetectionResultScreen extends StatelessWidget {
         children: [
           const TextSpan(text: '"'),
           ...words.map((word) {
-            final cleanWord =
-                word.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
-            final isHighlighted = effectiveHighlightedWords
-                .any((hw) => cleanWord.contains(hw.toLowerCase()));
+            final cleanWord = word
+                .replaceAll(RegExp(r'[^\w]'), '')
+                .toLowerCase();
+            final isHighlighted = effectiveHighlightedWords.any(
+              (hw) => cleanWord.contains(hw.toLowerCase()),
+            );
             return TextSpan(
               text: '$word ',
               style: isHighlighted
                   ? TextStyle(
-                      backgroundColor:
-                          AppColors.error.withValues(alpha: 0.15),
+                      backgroundColor: AppColors.error.withValues(alpha: 0.15),
                       color: AppColors.error,
                       fontWeight: FontWeight.w600,
                       fontStyle: FontStyle.italic,
@@ -319,7 +337,7 @@ class TextDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildBulletPoints() {
+  List<Widget> _buildBulletPoints(BuildContext context) {
     final List<Map<String, dynamic>> points;
 
     if (isViolent) {
@@ -383,7 +401,7 @@ class TextDetectionResultScreen extends StatelessWidget {
                   Text(
                     p['title'] as String,
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryColor(context),
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -393,7 +411,7 @@ class TextDetectionResultScreen extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         fontSize: 13.sp,
                         height: 1.4,
                       ),

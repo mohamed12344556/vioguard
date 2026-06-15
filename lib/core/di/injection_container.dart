@@ -9,6 +9,7 @@ import '../api/api_interceptors.dart';
 import '../api/dio_consumer.dart';
 import '../api/token_storage.dart';
 import '../config/app_config.dart';
+import '../theme/theme_cubit.dart';
 
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -50,6 +51,7 @@ Future<void> init() async {
 
   //! Core
   sl.registerLazySingleton(() => TokenStorage(sl()));
+  sl.registerLazySingleton(() => ThemeCubit(sl()));
 
   sl.registerLazySingleton(() {
     final dio = Dio(

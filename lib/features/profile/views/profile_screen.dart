@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Text(
                   'Profile',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryColor(context),
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -60,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Text(state.message,
                         style: TextStyle(
-                            color: AppColors.textSecondary, fontSize: 14.sp),
+                            color: AppColors.textSecondaryColor(context), fontSize: 14.sp),
                         textAlign: TextAlign.center),
                     SizedBox(height: 12.h),
                     TextButton(
@@ -76,9 +76,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: double.infinity,
                   padding: EdgeInsets.all(20.w),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: AppColors.surfaceColor(context),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: AppColors.borderColor(context)),
                   ),
                   child: Column(
                     children: [
@@ -123,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.primary,
-                            side: BorderSide(color: AppColors.border),
+                            side: BorderSide(color: AppColors.borderColor(context)),
                             padding: EdgeInsets.symmetric(vertical: 12.h),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25.r),
@@ -146,8 +146,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: TextStyle(
                             fontSize: 15.sp, fontWeight: FontWeight.w500)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textPrimary,
-                      side: BorderSide(color: AppColors.border),
+                      foregroundColor: AppColors.textPrimaryColor(context),
+                      side: BorderSide(color: AppColors.borderColor(context)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.r),
                       ),
@@ -256,19 +256,19 @@ class _ProfileField extends StatelessWidget {
       children: [
         Text(label,
             style:
-                TextStyle(color: AppColors.textSecondary, fontSize: 13.sp)),
+                TextStyle(color: AppColors.textSecondaryColor(context), fontSize: 13.sp)),
         SizedBox(height: 6.h),
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.surfaceColor(context),
             borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.borderColor(context)),
           ),
           child: Text(value,
               style: TextStyle(
-                  color: AppColors.textPrimary, fontSize: 15.sp)),
+                  color: AppColors.textPrimaryColor(context), fontSize: 15.sp)),
         ),
       ],
     );

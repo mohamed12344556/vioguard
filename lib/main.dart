@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/routes/app_router.dart';
 import 'core/routes/routes.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_cubit.dart';
 import 'core/di/injection_container.dart' as di;
 import 'core/di/injection_container.dart';
 import 'core/api/token_storage.dart';
@@ -65,23 +66,28 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => sl<VideoPredictionCubit>()),
         BlocProvider(create: (_) => sl<TextPredictionCubit>()),
         BlocProvider(create: (_) => sl<ContentCubit>()),
+        BlocProvider.value(value: sl<ThemeCubit>()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (context, child) {
-          return MaterialApp(
-            title: 'VioGuard',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.system,
-            initialRoute: isLoggedIn ? Routes.home : Routes.login,
-            onGenerateRoute: AppRouter.generateRoute,
-            localizationsDelegates: context.localizationDelegates,
-            supportedLocales: context.supportedLocales,
-            locale: context.locale,
+          return BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, themeMode) {
+              return MaterialApp(
+                title: 'VioGuard',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeMode,
+                initialRoute: isLoggedIn ? Routes.home : Routes.login,
+                onGenerateRoute: AppRouter.generateRoute,
+                localizationsDelegates: context.localizationDelegates,
+                supportedLocales: context.supportedLocales,
+                locale: context.locale,
+              );
+            },
           );
         },
       ),

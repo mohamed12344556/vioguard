@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/api/api_consumer.dart';
 import '../../../../core/api/server_strings.dart';
 import '../../../../core/config/app_config.dart';
@@ -61,6 +62,9 @@ class TextPredictionDataSourceImpl implements TextPredictionDataSource {
         sendTimeout: const Duration(seconds: 60),
       ),
     );
+
+    // TEMP: inspect exactly what the sentiment model returns for an input.
+    debugPrint('🧠 SENTIMENT raw response for "$text": ${response.data}');
 
     return TextPredictionResponse.fromJson(
       response.data as Map<String, dynamic>,

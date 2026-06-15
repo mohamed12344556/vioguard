@@ -36,7 +36,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Text(
           'History',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -48,7 +48,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           child: Container(
             padding: EdgeInsets.all(4.w),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: AppColors.bg(context),
               borderRadius: BorderRadius.circular(30.r),
             ),
             child: Row(
@@ -70,7 +70,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         style: TextStyle(
                           color: isSelected
                               ? Colors.white
-                              : AppColors.textSecondary,
+                              : AppColors.textSecondaryColor(context),
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
                         ),
@@ -98,7 +98,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       Text(
                         state.message,
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: AppColors.textSecondaryColor(context),
                           fontSize: 14.sp,
                         ),
                         textAlign: TextAlign.center,
@@ -120,7 +120,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Text(
                       'No history found',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondaryColor(context),
                         fontSize: 14.sp,
                       ),
                     ),
@@ -174,9 +174,9 @@ class _HistoryItemCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.surfaceColor(context),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderColor(context)),
         ),
         child: Row(
           children: [
@@ -205,7 +205,7 @@ class _HistoryItemCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: AppColors.textPrimaryColor(context),
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w500,
                     ),

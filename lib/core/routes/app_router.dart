@@ -41,15 +41,24 @@ class AppRouter {
             cleanedText: args?['cleanedText'] as String?,
             isViolent: args?['isViolent'] ?? false,
             highlightedWords: args?['highlightedWords'] as List<String>?,
+            sourceUrl: args?['sourceUrl'] as String?,
           ),
           settings,
         );
       case Routes.videoDetection:
         return _buildRoute(const VideoDetectionScreen(), settings);
       case Routes.videoDetectionResult:
-        final response = settings.arguments as VideoPredictionResponse;
+        // Accepts either a bare response (legacy callers) or a map carrying the
+        // optional source URL alongside the response.
+        final raw = settings.arguments;
+        final response = raw is VideoPredictionResponse
+            ? raw
+            : (raw as Map<String, dynamic>)['response']
+                as VideoPredictionResponse;
+        final sourceUrl =
+            raw is Map<String, dynamic> ? raw['sourceUrl'] as String? : null;
         return _buildRoute(
-          VideoDetectionResultScreen(response: response),
+          VideoDetectionResultScreen(response: response, sourceUrl: sourceUrl),
           settings,
         );
       case Routes.detectionDetails:

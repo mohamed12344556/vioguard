@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
-import '../../../core/routes/routes.dart';
 import '../data/models/video_prediction_response.dart';
+import '../widgets/source_content_card.dart';
 
 class VideoDetectionResultScreen extends StatelessWidget {
   final VideoPredictionResponse response;
+  final String? sourceUrl;
 
-  const VideoDetectionResultScreen({super.key, required this.response});
+  const VideoDetectionResultScreen({
+    super.key,
+    required this.response,
+    this.sourceUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,15 +22,15 @@ class VideoDetectionResultScreen extends StatelessWidget {
     final nonViolencePct = (response.nonViolence * 100).toStringAsFixed(1);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bg(context),
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Icon(
             Icons.arrow_back_ios,
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             size: 20.sp,
           ),
         ),
@@ -33,7 +38,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
         title: Text(
           'Detection Result',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: AppColors.textPrimaryColor(context),
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -44,6 +49,11 @@ class VideoDetectionResultScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Source card (only present when analysis came from a URL)
+            if (sourceUrl != null && sourceUrl!.isNotEmpty) ...[
+              SourceContentCard(url: sourceUrl, isVideo: true),
+              SizedBox(height: 20.h),
+            ],
             // Result Card
             Container(
               width: double.infinity,
@@ -88,7 +98,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
                   Text(
                     'Label: ${response.label}',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondaryColor(context),
                       fontSize: 14.sp,
                     ),
                   ),
@@ -101,14 +111,14 @@ class VideoDetectionResultScreen extends StatelessWidget {
               children: [
                 Icon(
                   Icons.analytics_outlined,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryColor(context),
                   size: 18.sp,
                 ),
                 SizedBox(width: 6.w),
                 Text(
                   'CONFIDENCE SCORES',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryColor(context),
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
@@ -119,6 +129,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
             SizedBox(height: 16.h),
             // Overall Confidence
             _buildScoreBar(
+              context,
               label: 'Overall Confidence',
               value: response.confidence,
               displayValue: '$confidencePct%',
@@ -127,6 +138,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
             SizedBox(height: 16.h),
             // Violence Score
             _buildScoreBar(
+              context,
               label: 'Violence',
               value: response.violence,
               displayValue: '$violencePct%',
@@ -135,6 +147,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
             SizedBox(height: 16.h),
             // Non-Violence Score
             _buildScoreBar(
+              context,
               label: 'Non-Violence',
               value: response.nonViolence,
               displayValue: '$nonViolencePct%',
@@ -146,14 +159,14 @@ class VideoDetectionResultScreen extends StatelessWidget {
               children: [
                 Icon(
                   Icons.info_outline,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondaryColor(context),
                   size: 18.sp,
                 ),
                 SizedBox(width: 6.w),
                 Text(
                   'ANALYSIS SUMMARY',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryColor(context),
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
@@ -167,13 +180,13 @@ class VideoDetectionResultScreen extends StatelessWidget {
                   ? 'Our AI model identified patterns in the video that are consistent with violent content with $confidencePct% confidence.'
                   : 'Our AI model has verified this video content as safe and free of violent behavior with $confidencePct% confidence.',
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondaryColor(context),
                 fontSize: 14.sp,
                 height: 1.5,
               ),
             ),
             SizedBox(height: 16.h),
-            _buildResultBullets(isViolent),
+            _buildResultBullets(context, isViolent),
             SizedBox(height: 32.h),
             // Analyze Another Button
             SizedBox(
@@ -181,10 +194,9 @@ class VideoDetectionResultScreen extends StatelessWidget {
               height: 52.h,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    Routes.videoDetection,
-                  );
+                  // Return to the Home/dashboard (the first route) rather than
+                  // opening a separate detection screen.
+                  Navigator.popUntil(context, (route) => route.isFirst);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -210,7 +222,8 @@ class VideoDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreBar({
+  Widget _buildScoreBar(
+    BuildContext context, {
     required String label,
     required double value,
     required String displayValue,
@@ -225,7 +238,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: AppColors.textPrimaryColor(context),
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
               ),
@@ -254,7 +267,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildResultBullets(bool violent) {
+  Widget _buildResultBullets(BuildContext context, bool violent) {
     final List<String> bullets;
 
     if (violent) {
@@ -289,7 +302,7 @@ class VideoDetectionResultScreen extends StatelessWidget {
                 child: Text(
                   b,
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimaryColor(context),
                     fontSize: 14.sp,
                   ),
                 ),

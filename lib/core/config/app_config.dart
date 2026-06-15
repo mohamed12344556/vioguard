@@ -11,7 +11,9 @@ class AppConfig {
   static String get baseUrl {
     return isProduction
         ? 'https://asmaaelsayed-001-site1.ltempurl.com'
-        : 'https://asmaaelsayed-001-site1.ltempurl.com';
+        // Android emulator reaches the host machine's localhost via 10.0.2.2.
+        // For a real device on the same Wi-Fi use the host LAN IP (e.g. http://192.168.1.2:5259).
+        : 'http://10.0.2.2:5259';
   }
 
   /// HTTP Basic Auth credentials guarding the hosting environment.
