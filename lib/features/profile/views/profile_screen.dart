@@ -27,6 +27,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// of truth and the backend preference is updated alongside it.
   bool _darkModeEnabled = false;
 
+  /// Last loaded profile values. Kept in state so the fields stay populated even
+  /// when the shared [ProfileCubit] later emits a non-[ProfileLoaded] state
+  /// (e.g. ProfileUpdating / PreferencesUpdateSuccess after toggling Dark mode),
+  /// which would otherwise blank the form until the next loadProfile().
+  String _fullName = '';
+  String _email = '';
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +82,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           setState(() {
             _darkModeEnabled = context.read<ThemeCubit>().isDarkMode;
             _isMonthlyReportEnabled = state.profile.isMonthlyReportEnabled;
+            _fullName = state.profile.fullName;
+            _email = state.profile.email;
           });
           return;
         }
@@ -104,13 +113,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       },
       builder: (context, state) {
-        String fullName = '';
-        String email = '';
-
-        if (state is ProfileLoaded) {
-          fullName = state.profile.fullName;
-          email = state.profile.email;
-        }
+        // Use the last loaded values (kept in state) rather than only the
+        // current state, so the form stays populated across non-loaded states.
+        final fullName =
+            state is ProfileLoaded ? state.profile.fullName : _fullName;
+        final email = state is ProfileLoaded ? state.profile.email : _email;
 
         final (firstName, lastName) = _splitName(fullName);
 

@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../core/api/token_storage.dart';
+import '../../../core/di/injection_container.dart';
 import '../../../core/routes/routes.dart';
 import '../../../core/theme/colors.dart';
 import '../../detection/presentation/cubit/text_prediction_cubit.dart';
@@ -25,8 +30,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Index of the Reports tab in [IndexedStack] / the bottom nav.
   static const int _reportsTabIndex = 2;
 
-  /// Index of the Profile tab in [IndexedStack] / the bottom nav.
-  static const int _profileTabIndex = 3;
+  /// Index of the Home tab in [IndexedStack] / the bottom nav.
+  static const int _homeTabIndex = 0;
+
+  /// Path of the saved profile image shown in the Home header. Re-read whenever
+  /// the Home tab is reopened so a newly-picked avatar shows up immediately
+  /// (tabs live in an IndexedStack, so [_HomeContent] never re-runs initState).
+  String? _profileImagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileImagePath = _readProfileImagePath();
+  }
+
+  String? _readProfileImagePath() {
+    final path = sl<TokenStorage>().getProfileImagePath();
+    if (path != null && File(path).existsSync()) return path;
+    return null;
+  }
 
   void _onTabSelected(int index) {
     // Tabs live in an IndexedStack, so their screens stay alive and never
@@ -34,6 +56,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // it reflects the latest analyses.
     if (index == _reportsTabIndex) {
       context.read<ReportsCubit>().loadDashboard();
+    }
+    // Refresh the header avatar when returning to Home, in case it was changed
+    // from the Profile tab.
+    if (index == _homeTabIndex) {
+      _profileImagePath = _readProfileImagePath();
     }
     setState(() => _currentIndex = index);
   }
@@ -90,8 +117,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
 
-    if (shouldExit == true && mounted) {
-      Navigator.pop(context);
+    if (shouldExit == true) {
+      // Close the app entirely instead of just popping the Dashboard route.
+      SystemNavigator.pop();
     }
   }
 
@@ -109,7 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: IndexedStack(
             index: _currentIndex,
             children: [
-              _HomeContent(onOpenProfile: () => _onTabSelected(_profileTabIndex)),
+              _HomeContent(profileImagePath: _profileImagePath),
               const HistoryScreen(),
               const ReportsScreen(),
               const ProfileScreen(),
@@ -171,10 +199,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class _HomeContent extends StatefulWidget {
-  const _HomeContent({required this.onOpenProfile});
+  const _HomeContent({this.profileImagePath});
 
-  /// Switches the dashboard to the Profile tab (tapped from the header).
-  final VoidCallback onOpenProfile;
+  /// Path of the saved profile image, shown in the header avatar. Null — or a
+  /// missing file — falls back to a person icon. Provided (and refreshed) by the
+  /// dashboard so it stays in sync with edits made in the Profile tab.
+  final String? profileImagePath;
 
   @override
   State<_HomeContent> createState() => _HomeContentState();
@@ -254,6 +284,7 @@ class _HomeContentState extends State<_HomeContent> {
 
   @override
   Widget build(BuildContext context) {
+    final profileImagePath = widget.profileImagePath;
     return MultiBlocListener(
       listeners: [
         BlocListener<VideoPredictionCubit, VideoPredictionState>(
@@ -332,19 +363,27 @@ class _HomeContentState extends State<_HomeContent> {
                     child: Icon(Icons.shield, color: Colors.white, size: 24.sp),
                   ),
                 ),
-                IconButton(
-                  onPressed: widget.onOpenProfile,
-                  icon: Icon(
-                    Icons.person_outline,
-                    color: AppColors.primary,
-                    size: 28.sp,
+                Container(
+                  width: 40.w,
+                  height: 40.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
+                  clipBehavior: Clip.antiAlias,
+                  child: profileImagePath != null
+                      ? Image.file(File(profileImagePath), fit: BoxFit.cover)
+                      : Icon(
+                          Icons.person_outline,
+                          color: AppColors.primary,
+                          size: 24.sp,
+                        ),
                 ),
               ],
             ),
             SizedBox(height: 20.h),
             Text(
-              'Paste a link to analyze text or video content for '
+              'Paste a link or type text directly to analyze it for '
               'potential violence or harmful themes.',
               style: TextStyle(
                 color: AppColors.textSecondaryColor(context),
@@ -377,7 +416,7 @@ class _HomeContentState extends State<_HomeContent> {
                   fontSize: 15.sp,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Paste URL here...',
+                  hintText: 'Paste URL here Or type text...',
                   hintStyle: TextStyle(
                     color: AppColors.textLight,
                     fontSize: 15.sp,

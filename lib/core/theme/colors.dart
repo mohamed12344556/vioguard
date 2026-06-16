@@ -97,8 +97,10 @@ class AppColors {
   static Color textPrimaryColor(BuildContext context) =>
       _isDark(context) ? textLight : textPrimary;
 
-  /// Secondary, lower-emphasis text. (Same value works in both modes.)
-  static Color textSecondaryColor(BuildContext context) => textSecondary;
+  /// Secondary, lower-emphasis text. The light-mode grey (textSecondary) is too
+  /// dark to read on the dark background, so use the lighter grey there.
+  static Color textSecondaryColor(BuildContext context) =>
+      _isDark(context) ? textLight : textSecondary;
 
   /// Borders / outlines.
   static Color borderColor(BuildContext context) =>

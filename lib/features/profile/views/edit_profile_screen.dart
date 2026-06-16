@@ -24,6 +24,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   XFile? _pickedImage;
   // The already-saved profile image path, shown until the user picks a new one.
   String? _savedImagePath;
+  // Guards against re-entrant picker launches (a fast double-tap otherwise
+  // throws PlatformException(already_active, ...)).
+  bool _isPickingImage = false;
 
   @override
   void initState() {
@@ -41,23 +44,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
+      // Keep the name exactly as it is stored locally (set in initState).
+      // Only fall back to the loaded profile when there's no saved name/email.
       final state = context.read<ProfileCubit>().state;
       if (state is ProfileLoaded) {
-        _fullNameController.text = state.profile.fullName;
-        _emailController.text = state.profile.email;
+        if (_fullNameController.text.isEmpty) {
+          _fullNameController.text = state.profile.fullName;
+        }
+        if (_emailController.text.isEmpty) {
+          _emailController.text = state.profile.email;
+        }
       }
       _isInitialized = true;
     }
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (picked != null) {
-      setState(() => _pickedImage = picked);
+    if (_isPickingImage) return;
+    _isPickingImage = true;
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked != null && mounted) {
+        setState(() => _pickedImage = picked);
+      }
+    } finally {
+      _isPickingImage = false;
     }
   }
 
