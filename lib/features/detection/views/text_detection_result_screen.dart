@@ -28,8 +28,9 @@ class TextDetectionResultScreen extends StatelessWidget {
     // When Gemini confidently disagrees, it overrides the primary model and the
     // whole screen (verdict, summary, bullets) reflects Gemini's verdict.
     final state = context.watch<TextPredictionCubit>().state;
-    final verification =
-        state is TextPredictionLoaded ? state.verification : null;
+    final verification = state is TextPredictionLoaded
+        ? state.verification
+        : null;
     final effectiveIsViolent = verification?.overridesModel == true
         ? verification!.geminiSaysViolent
         : isViolent;
@@ -56,16 +57,16 @@ class TextDetectionResultScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-              Icons.more_vert,
-              color: AppColors.textPrimaryColor(context),
-              size: 22.sp,
-            ),
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     onPressed: () {},
+        //     icon: Icon(
+        //       Icons.more_vert,
+        //       color: AppColors.textPrimaryColor(context),
+        //       size: 22.sp,
+        //     ),
+        //   ),
+        // ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),

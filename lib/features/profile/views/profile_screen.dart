@@ -115,8 +115,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, state) {
         // Use the last loaded values (kept in state) rather than only the
         // current state, so the form stays populated across non-loaded states.
-        final fullName =
-            state is ProfileLoaded ? state.profile.fullName : _fullName;
+        final fullName = state is ProfileLoaded
+            ? state.profile.fullName
+            : _fullName;
         final email = state is ProfileLoaded ? state.profile.email : _email;
 
         final (firstName, lastName) = _splitName(fullName);
@@ -172,21 +173,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
-                      Container(
-                        width: 80.w,
-                        height: 80.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: _imagePath != null
-                            ? Image.file(File(_imagePath!), fit: BoxFit.cover)
-                            : Icon(
-                                Icons.person_outline,
-                                color: AppColors.primary,
-                                size: 40.sp,
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 80.w,
+                            height: 80.h,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: _imagePath != null
+                                ? Image.file(
+                                    File(_imagePath!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : Icon(
+                                    Icons.person_outline,
+                                    color: AppColors.primary,
+                                    size: 40.sp,
+                                  ),
+                          ),
+                          if (_imagePath != null)
+                            Positioned(
+                              right: -4.w,
+                              bottom: -4.h,
+                              child: GestureDetector(
+                                onTap: _showDeletePhotoDialog,
+                                child: Container(
+                                  padding: EdgeInsets.all(6.w),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.surfaceColor(context),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.white,
+                                    size: 16.sp,
+                                  ),
+                                ),
                               ),
+                            ),
+                        ],
                       ),
                       SizedBox(height: 20.h),
                       _ProfileField(label: 'First Name', value: firstName),
@@ -368,6 +401,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text('Log Out', style: TextStyle(color: AppColors.error)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showDeletePhotoDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Photo'),
+        content: const Text(
+          'Are you sure you want to remove your profile photo?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deletePhoto();
+            },
+            child: Text('Delete', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePhoto() async {
+    await sl<TokenStorage>().clearProfileImagePath();
+    if (!mounted) return;
+    setState(() => _imagePath = null);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Profile photo removed.'),
+        backgroundColor: AppColors.success,
       ),
     );
   }

@@ -128,7 +128,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _showExitDialog();
+        if (didPop) return;
+        // If we're not on the Home tab, back returns to Home instead of exiting.
+        if (_currentIndex != _homeTabIndex) {
+          _onTabSelected(_homeTabIndex);
+          return;
+        }
+        // Already on Home: confirm before leaving the app.
+        _showExitDialog();
       },
       child: Scaffold(
         backgroundColor: AppColors.bg(context),
