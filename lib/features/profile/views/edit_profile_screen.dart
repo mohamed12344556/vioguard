@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/api/token_storage.dart';
 import '../../../core/di/injection_container.dart';
@@ -21,6 +22,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _emailController = TextEditingController();
   bool _isInitialized = false;
   XFile? _pickedImage;
+  // The already-saved profile image path, shown until the user picks a new one.
+  String? _savedImagePath;
 
   @override
   void initState() {
@@ -28,6 +31,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final tokenStorage = sl<TokenStorage>();
     _fullNameController.text = tokenStorage.getUserName() ?? '';
     _emailController.text = tokenStorage.getUserEmail() ?? '';
+    final savedPath = tokenStorage.getProfileImagePath();
+    if (savedPath != null && File(savedPath).existsSync()) {
+      _savedImagePath = savedPath;
+    }
   }
 
   @override
@@ -61,8 +68,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _saveChanges() {
+  /// Copies the picked image into the app's documents directory (the picker's
+  /// temp file is not guaranteed to survive) and persists its path per-user, so
+  /// it stays after the app is closed and reopened.
+  Future<void> _persistPickedImage() async {
+    final picked = _pickedImage;
+    if (picked == null) return;
+
+    final tokenStorage = sl<TokenStorage>();
+    final docsDir = await getApplicationDocumentsDirectory();
+    final ext = picked.path.contains('.')
+        ? picked.path.substring(picked.path.lastIndexOf('.'))
+        : '.jpg';
+    final destPath =
+        '${docsDir.path}/profile_image_${DateTime.now().millisecondsSinceEpoch}$ext';
+
+    await File(picked.path).copy(destPath);
+    await tokenStorage.saveProfileImagePath(destPath);
+    _savedImagePath = destPath;
+  }
+
+  Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
+    await _persistPickedImage();
+    if (!mounted) return;
     context.read<ProfileCubit>().updateProfile(
           fullName: _fullNameController.text.trim(),
           email: _emailController.text.trim(),
@@ -103,7 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 backgroundColor: AppColors.success,
               ),
             );
-            Navigator.pop(context, _pickedImage?.path ?? '');
+            Navigator.pop(context, _savedImagePath ?? '');
           } else if (state is ProfileError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -148,8 +177,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       File(_pickedImage!.path),
                                       fit: BoxFit.cover,
                                     )
-                                  : Icon(Icons.person_outline,
-                                      color: AppColors.primary, size: 40.sp),
+                                  : (_savedImagePath != null
+                                      ? Image.file(
+                                          File(_savedImagePath!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Icon(Icons.person_outline,
+                                          color: AppColors.primary,
+                                          size: 40.sp)),
                             ),
                             Positioned(
                               right: 0,

@@ -1,9 +1,14 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../core/theme/colors.dart';
+
+import '../../../core/api/token_storage.dart';
+import '../../../core/di/injection_container.dart';
 import '../../../core/routes/routes.dart';
+import '../../../core/theme/colors.dart';
+import '../../../core/theme/theme_cubit.dart';
 import '../../auth/presentation/bloc/auth_cubit.dart';
 import '../presentation/cubit/profile_cubit.dart';
 
@@ -16,19 +21,63 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _imagePath;
+  bool _isDeleting = false;
+
+  /// Mirrors [ThemeCubit] for the Dark mode switch; the cubit stays the source
+  /// of truth and the backend preference is updated alongside it.
+  bool _darkModeEnabled = false;
 
   @override
   void initState() {
     super.initState();
+    _darkModeEnabled = context.read<ThemeCubit>().isDarkMode;
     context.read<ProfileCubit>().loadProfile();
+    // Restore the previously-saved profile image so it survives an app restart.
+    final savedPath = sl<TokenStorage>().getProfileImagePath();
+    if (savedPath != null && File(savedPath).existsSync()) {
+      _imagePath = savedPath;
+    }
   }
 
-  bool _isDeleting = false;
+  void _applyDarkMode(bool isDark) {
+    setState(() => _darkModeEnabled = isDark);
+    context.read<ThemeCubit>().setDarkMode(isDark);
+    // Persist alongside the existing monthly-report preference.
+    context.read<ProfileCubit>().updatePreferences(
+      isDarkMode: isDark,
+      isMonthlyReportEnabled: _isMonthlyReportEnabled,
+    );
+  }
+
+  bool _isMonthlyReportEnabled = false;
+
+  /// Splits a full name into first/last parts for display. The first word is
+  /// the first name; everything after it is the last name.
+  static (String, String) _splitName(String fullName) {
+    final trimmed = fullName.trim();
+    if (trimmed.isEmpty) return ('', '');
+    final spaceIndex = trimmed.indexOf(' ');
+    if (spaceIndex == -1) return (trimmed, '');
+    return (
+      trimmed.substring(0, spaceIndex),
+      trimmed.substring(spaceIndex + 1).trim(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ProfileCubit, ProfileState>(
       listener: (context, state) {
+        if (state is ProfileLoaded) {
+          context.read<ThemeCubit>().hydrateFromBackend(
+            state.profile.isDarkMode,
+          );
+          setState(() {
+            _darkModeEnabled = context.read<ThemeCubit>().isDarkMode;
+            _isMonthlyReportEnabled = state.profile.isMonthlyReportEnabled;
+          });
+          return;
+        }
         if (!_isDeleting) return;
         if (state is AccountDeleteSuccess) {
           _isDeleting = false;
@@ -63,6 +112,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           email = state.profile.email;
         }
 
+        final (firstName, lastName) = _splitName(fullName);
+
         return SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
           child: Column(
@@ -86,10 +137,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               else if (state is ProfileError)
                 Column(
                   children: [
-                    Text(state.message,
-                        style: TextStyle(
-                            color: AppColors.textSecondaryColor(context), fontSize: 14.sp),
-                        textAlign: TextAlign.center),
+                    Text(
+                      state.message,
+                      style: TextStyle(
+                        color: AppColors.textSecondaryColor(context),
+                        fontSize: 14.sp,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                     SizedBox(height: 12.h),
                     TextButton(
                       onPressed: () =>
@@ -120,11 +175,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         clipBehavior: Clip.antiAlias,
                         child: _imagePath != null
                             ? Image.file(File(_imagePath!), fit: BoxFit.cover)
-                            : Icon(Icons.person_outline,
-                                color: AppColors.primary, size: 40.sp),
+                            : Icon(
+                                Icons.person_outline,
+                                color: AppColors.primary,
+                                size: 40.sp,
+                              ),
                       ),
                       SizedBox(height: 20.h),
-                      _ProfileField(label: 'Full Name', value: fullName),
+                      _ProfileField(label: 'First Name', value: firstName),
+                      // SizedBox(height: 16.h),
+                      // _ProfileField(label: 'Last Name', value: lastName),
                       SizedBox(height: 16.h),
                       _ProfileField(label: 'Email', value: email),
                       SizedBox(height: 20.h),
@@ -147,17 +207,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           label: Text(
                             'Edit Profile',
                             style: TextStyle(
-                                fontSize: 14.sp, fontWeight: FontWeight.w500),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.primary,
-                            side: BorderSide(color: AppColors.borderColor(context)),
+                            side: BorderSide(
+                              color: AppColors.borderColor(context),
+                            ),
                             padding: EdgeInsets.symmetric(vertical: 12.h),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25.r),
                             ),
                           ),
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                // Account Settings
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceColor(context),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.borderColor(context)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Account Settings',
+                        style: TextStyle(
+                          color: AppColors.textPrimaryColor(context),
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      _AccountRow(
+                        icon: Icons.lock_outline,
+                        title: 'Change Password',
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textSecondaryColor(context),
+                          size: 22.sp,
+                        ),
+                        onTap: () =>
+                            Navigator.pushNamed(context, Routes.changePassword),
+                      ),
+                      Divider(
+                        height: 24.h,
+                        color: AppColors.borderColor(context),
+                      ),
+                      _AccountRow(
+                        icon: Icons.dark_mode_outlined,
+                        title: 'Dark mode',
+                        trailing: Switch(
+                          value: _darkModeEnabled,
+                          onChanged: _applyDarkMode,
+                          activeThumbColor: AppColors.primary,
+                          activeTrackColor: AppColors.primary.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                        onTap: () => _applyDarkMode(!_darkModeEnabled),
                       ),
                     ],
                   ),
@@ -170,11 +287,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => _showLogoutDialog(context),
                     icon: Icon(Icons.logout, size: 20.sp),
-                    label: Text('Log Out',
-                        style: TextStyle(
-                            fontSize: 15.sp, fontWeight: FontWeight.w500)),
+                    label: Text(
+                      'Log Out',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textPrimaryColor(context),
+                      foregroundColor: AppColors.primary,
                       side: BorderSide(color: AppColors.borderColor(context)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.r),
@@ -190,9 +311,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () => _showDeleteAccountDialog(context),
                     icon: Icon(Icons.delete_outline, size: 20.sp),
-                    label: Text('Delete Account',
-                        style: TextStyle(
-                            fontSize: 15.sp, fontWeight: FontWeight.w600)),
+                    label: Text(
+                      'Delete Account',
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
                       foregroundColor: Colors.white,
@@ -279,9 +404,13 @@ class _ProfileField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style:
-                TextStyle(color: AppColors.textSecondaryColor(context), fontSize: 13.sp)),
+        Text(
+          label,
+          style: TextStyle(
+            color: AppColors.textSecondaryColor(context),
+            fontSize: 13.sp,
+          ),
+        ),
         SizedBox(height: 6.h),
         Container(
           width: double.infinity,
@@ -291,11 +420,54 @@ class _ProfileField extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(color: AppColors.borderColor(context)),
           ),
-          child: Text(value,
-              style: TextStyle(
-                  color: AppColors.textPrimaryColor(context), fontSize: 15.sp)),
+          child: Text(
+            value,
+            style: TextStyle(
+              color: AppColors.textPrimaryColor(context),
+              fontSize: 15.sp,
+            ),
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _AccountRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Widget trailing;
+  final VoidCallback onTap;
+
+  const _AccountRow({
+    required this.icon,
+    required this.title,
+    required this.trailing,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8.r),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.textPrimaryColor(context), size: 22.sp),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: AppColors.textPrimaryColor(context),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          trailing,
+        ],
+      ),
     );
   }
 }

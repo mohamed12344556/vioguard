@@ -422,40 +422,40 @@ class _DetailsContent extends StatelessWidget {
           ),
           SizedBox(height: 24.h),
 
-          // Delete button
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 48.h,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _showDeleteDialog(context),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      size: 18.sp,
-                      color: AppColors.error,
-                    ),
-                    label: Text(
-                      'Delete Report',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.error,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: BorderSide(color: AppColors.borderColor(context)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20.h),
+          // // Delete button
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       child: SizedBox(
+          //         height: 48.h,
+          //         child: OutlinedButton.icon(
+          //           onPressed: () => _showDeleteDialog(context),
+          //           icon: Icon(
+          //             Icons.delete_outline,
+          //             size: 18.sp,
+          //             color: AppColors.error,
+          //           ),
+          //           label: Text(
+          //             'Delete Report',
+          //             style: TextStyle(
+          //               fontSize: 14.sp,
+          //               fontWeight: FontWeight.w500,
+          //               color: AppColors.error,
+          //             ),
+          //           ),
+          //           style: OutlinedButton.styleFrom(
+          //             foregroundColor: AppColors.error,
+          //             side: BorderSide(color: AppColors.borderColor(context)),
+          //             shape: RoundedRectangleBorder(
+          //               borderRadius: BorderRadius.circular(12.r),
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          // SizedBox(height: 20.h),
         ],
       ),
     );

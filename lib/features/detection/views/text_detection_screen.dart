@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/theme/colors.dart';
 import '../presentation/cubit/text_prediction_cubit.dart';
+import '../presentation/cubit/video_prediction_cubit.dart';
 import 'text_detection_result_screen.dart';
+import 'video_detection_result_screen.dart';
 
 class TextDetectionScreen extends StatefulWidget {
   const TextDetectionScreen({super.key});
@@ -15,19 +17,22 @@ class TextDetectionScreen extends StatefulWidget {
 class _TextDetectionScreenState extends State<TextDetectionScreen> {
   final TextEditingController _textController = TextEditingController();
 
-  /// Cached so dispose() can reset the cubit without an unsafe context lookup
+  /// Cached so dispose() can reset the cubits without an unsafe context lookup
   /// on a deactivated widget.
   late TextPredictionCubit _cubit;
+  late VideoPredictionCubit _videoCubit;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _cubit = context.read<TextPredictionCubit>();
+    _videoCubit = context.read<VideoPredictionCubit>();
   }
 
   @override
   void dispose() {
     _cubit.reset();
+    _videoCubit.reset();
     _textController.dispose();
     super.dispose();
   }
@@ -39,21 +44,62 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
     return lower.startsWith('http://') || lower.startsWith('https://');
   }
 
+  /// A URL that points at a video stream/file, by extension. Such links must go
+  /// to the video pipeline (scrape-video); the text pipeline rejects them (415).
+  bool _looksLikeVideoUrl(String value) {
+    // Drop any query string / fragment before checking the extension.
+    final path = value.toLowerCase().split('?').first.split('#').first;
+    const videoExtensions = [
+      '.m3u8', '.mp4', '.mkv', '.webm', '.avi', '.mov',
+    ];
+    return videoExtensions.any(path.endsWith);
+  }
+
   void _detectViolence() {
     final input = _textController.text.trim();
     if (input.isEmpty) return;
 
-    final cubit = context.read<TextPredictionCubit>();
     if (_looksLikeUrl(input)) {
-      cubit.predictFromUrl(input);
+      // Route video links to the video pipeline; everything else stays text.
+      if (_looksLikeVideoUrl(input)) {
+        _videoCubit.predictFromUrl(input);
+      } else {
+        _cubit.predictFromUrl(input);
+      }
     } else {
-      cubit.predict(input);
+      _cubit.predict(input);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<TextPredictionCubit, TextPredictionState>(
+    return MultiBlocListener(
+      listeners: [
+        // Navigate to the video result screen when a video URL was routed to
+        // the video pipeline from this (text) screen.
+        BlocListener<VideoPredictionCubit, VideoPredictionState>(
+          listener: (context, state) {
+            if (state is VideoPredictionLoaded) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider.value(
+                    value: _videoCubit,
+                    child: VideoDetectionResultScreen(response: state.response),
+                  ),
+                ),
+              );
+            } else if (state is VideoPredictionError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+        ),
+        BlocListener<TextPredictionCubit, TextPredictionState>(
       listener: (context, state) {
         if (state is TextPredictionLoaded) {
           // When a URL was scraped, show the extracted text the model actually
@@ -88,6 +134,8 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
           );
         }
       },
+        ),
+      ],
       child: Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
@@ -203,7 +251,13 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
             // Detect Button
             BlocBuilder<TextPredictionCubit, TextPredictionState>(
               builder: (context, state) {
-                final isLoading = state is TextPredictionLoading;
+                // A video URL is analyzed via the video cubit, so reflect either
+                // pipeline's loading state on the button.
+                final videoLoading = context
+                    .watch<VideoPredictionCubit>()
+                    .state is VideoPredictionLoading;
+                final isLoading =
+                    state is TextPredictionLoading || videoLoading;
                 return SizedBox(
                   width: double.infinity,
                   height: 52.h,

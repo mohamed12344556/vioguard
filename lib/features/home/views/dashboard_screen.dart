@@ -25,6 +25,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Index of the Reports tab in [IndexedStack] / the bottom nav.
   static const int _reportsTabIndex = 2;
 
+  /// Index of the Profile tab in [IndexedStack] / the bottom nav.
+  static const int _profileTabIndex = 3;
+
   void _onTabSelected(int index) {
     // Tabs live in an IndexedStack, so their screens stay alive and never
     // re-run initState. Refresh the Reports dashboard each time it's opened so
@@ -105,11 +108,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         body: SafeArea(
           child: IndexedStack(
             index: _currentIndex,
-            children: const [
-              _HomeContent(),
-              HistoryScreen(),
-              ReportsScreen(),
-              ProfileScreen(),
+            children: [
+              _HomeContent(onOpenProfile: () => _onTabSelected(_profileTabIndex)),
+              const HistoryScreen(),
+              const ReportsScreen(),
+              const ProfileScreen(),
             ],
           ),
         ),
@@ -168,7 +171,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class _HomeContent extends StatefulWidget {
-  const _HomeContent();
+  const _HomeContent({required this.onOpenProfile});
+
+  /// Switches the dashboard to the Profile tab (tapped from the header).
+  final VoidCallback onOpenProfile;
 
   @override
   State<_HomeContent> createState() => _HomeContentState();
@@ -327,10 +333,9 @@ class _HomeContentState extends State<_HomeContent> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, Routes.settings),
+                  onPressed: widget.onOpenProfile,
                   icon: Icon(
-                    Icons.settings_outlined,
+                    Icons.person_outline,
                     color: AppColors.primary,
                     size: 28.sp,
                   ),
