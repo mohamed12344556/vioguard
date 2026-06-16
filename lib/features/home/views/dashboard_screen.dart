@@ -312,9 +312,9 @@ class _HomeContentState extends State<_HomeContent> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Image.asset(
-                  'assets/images/app_logo.jpg',
-                  width: 40.w,
-                  height: 40.h,
+                  'assets/images/logo-removebg-preview.png',
+                  width: 80.w,
+                  height: 80.h,
                   fit: BoxFit.contain,
                   errorBuilder: (_, e, s) => Container(
                     width: 40.w,
