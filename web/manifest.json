@@ -1,6 +1,6 @@
 {
-    "name": "vioguard",
-    "short_name": "vioguard",
+    "name": "VioGuard",
+    "short_name": "VioGuard",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
