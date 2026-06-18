@@ -524,9 +524,12 @@ class _DetailsContent extends StatelessWidget {
       height: 1.5,
     );
 
+    // Flagged entries can be multi-word phrases ("kill you"); break them into
+    // individual word-tokens so per-word highlighting matches each part.
     final flagged = words
-        .map((w) => w.trim().toLowerCase())
-        .where((w) => w.isNotEmpty)
+        .expand((p) => p.toLowerCase().split(RegExp(r'\s+')))
+        .map((t) => t.replaceAll(RegExp(r'[^\w]'), ''))
+        .where((t) => t.isNotEmpty)
         .toSet();
 
     if (flagged.isEmpty) {
@@ -540,8 +543,8 @@ class _DetailsContent extends StatelessWidget {
         style: baseStyle,
         children: tokens.map((token) {
           final clean = token.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
-          final isHit = clean.isNotEmpty &&
-              flagged.any((w) => w.contains(clean) || clean.contains(w));
+          // Highlight when this word exactly matches a flagged token.
+          final isHit = clean.isNotEmpty && flagged.contains(clean);
           return TextSpan(
             text: '$token ',
             style: isHit

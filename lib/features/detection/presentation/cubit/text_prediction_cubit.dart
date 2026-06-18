@@ -68,21 +68,25 @@ class TextPredictionCubit extends Cubit<TextPredictionState> {
       // While it runs the UI is still in Loading — both reads as "analyzing".
       final verification = await _verify(text, response.isViolent);
 
-      // The verdict shown and saved. The primary sentiment model is currently
-      // broken (returns the same label for everything), so Gemini IS the
-      // classifier: whenever it returned a verdict, that wins. We fall back to
-      // the model only when Gemini is disabled or its call failed.
-      final finalIsViolent = verification != null
-          ? verification.effectiveVerdict
-          : response.isViolent;
+      // Decide the verdict + flagged words.
+      // - Gemini ran → trust it (it's the real classifier).
+      // - Gemini unavailable (quota/network) → DON'T trust the broken primary
+      //   model (it labels everything violent). Use a simple keyword scan so the
+      //   result is at least sensible instead of "everything is violent".
+      final bool finalIsViolent;
+      final List<String> flaggedWords;
+      if (verification != null) {
+        finalIsViolent = verification.effectiveVerdict;
+        flaggedWords =
+            finalIsViolent ? verification.violentWords : const <String>[];
+      } else {
+        final hits = _keywordViolentWords(text);
+        finalIsViolent = hits.isNotEmpty;
+        flaggedWords = hits;
+      }
+
       // Backend expects "0" => violent, "1" => non-violent.
       final finalResult = finalIsViolent ? '0' : '1';
-
-      // The flagged words to persist (and highlight later). Only meaningful when
-      // the final verdict is violent; Gemini supplies them.
-      final flaggedWords = finalIsViolent
-          ? (verification?.violentWords ?? const [])
-          : const <String>[];
 
       // TEMP: trace whether Gemini ran and what words we're about to persist.
       debugPrint('💾 SAVE text: violent=$finalIsViolent, '
@@ -101,8 +105,15 @@ class TextPredictionCubit extends Cubit<TextPredictionState> {
         );
       }
 
-      // Single emit with the final, verified result — no flicker.
-      emit(TextPredictionLoaded(response, verification: verification));
+      // Single emit with the final, verified result — no flicker. Carry the
+      // authoritative verdict + words so the UI doesn't re-derive them from the
+      // broken primary model.
+      emit(TextPredictionLoaded(
+        response,
+        verification: verification,
+        finalIsViolent: finalIsViolent,
+        finalViolentWords: flaggedWords,
+      ));
     } on DioException catch (e) {
       emit(TextPredictionError(_messageFrom(e)));
     } catch (e) {
@@ -117,6 +128,31 @@ class TextPredictionCubit extends Cubit<TextPredictionState> {
       text: text,
       modelSaysViolent: modelSaysViolent,
     );
+  }
+
+  /// Violence keywords (English + Arabic) used ONLY as a fallback when Gemini
+  /// is unavailable, so the verdict isn't dictated by the broken primary model.
+  /// Returns the matched words (for highlighting); empty means "looks safe".
+  static const List<String> _violenceKeywords = [
+    // English
+    'kill', 'murder', 'stab', 'shoot', 'attack', 'beat', 'punch', 'slaughter',
+    'destroy', 'bomb', 'explode', 'threat', 'hurt', 'assault', 'rape',
+    'massacre', 'blood', 'weapon', 'knife', 'gun', 'die', 'death', 'fight',
+    // Arabic
+    'اقتل', 'أقتل', 'قتل', 'اذبح', 'أذبح', 'ذبح', 'اضرب', 'أضرب', 'ضرب',
+    'سلاح', 'سكين', 'مسدس', 'دم', 'تفجير', 'فجر', 'تهديد', 'هدد', 'اعتداء',
+    'اغتصاب', 'موت', 'دمار', 'دمر', 'حرب', 'عنف', 'انتقام', 'كلب',
+  ];
+
+  static List<String> _keywordViolentWords(String text) {
+    final lower = text.toLowerCase();
+    final hits = <String>[];
+    for (final kw in _violenceKeywords) {
+      if (lower.contains(kw.toLowerCase()) && !hits.contains(kw)) {
+        hits.add(kw);
+      }
+    }
+    return hits;
   }
 
   String _messageFrom(DioException e) {

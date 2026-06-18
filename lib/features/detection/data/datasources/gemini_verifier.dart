@@ -19,10 +19,19 @@ import '../models/gemini_verification.dart';
 class GeminiVerifier {
   final Dio _dio = Dio();
 
-  /// REST endpoint for the configured model: `…/models/<model>:generateContent`.
-  String get _endpoint =>
+  /// Models tried in order. The free tier rate-limits each model separately
+  /// (~20 req/min), so when the primary returns 429 we fall back to the next
+  /// model, which has its own quota.
+  static const List<String> _models = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-flash-latest',
+  ];
+
+  /// REST endpoint for a given model: `…/models/<model>:generateContent`.
+  String _endpointFor(String model) =>
       'https://generativelanguage.googleapis.com/v1beta/models/'
-      '${GeminiConfig.modelName}:generateContent';
+      '$model:generateContent';
 
   bool get isEnabled => GeminiConfig.isEnabled;
 
@@ -91,54 +100,79 @@ exact shape:
     required bool modelSaysViolent,
   }) async {
     if (!isEnabled) return null;
-    try {
-      final response = await _dio.post(
-        _endpoint,
-        queryParameters: {'key': GeminiConfig.apiKey},
-        options: Options(
-          headers: {'Content-Type': 'application/json'},
-          receiveTimeout: const Duration(seconds: 30),
-          sendTimeout: const Duration(seconds: 30),
-        ),
-        data: {
-          'contents': [
-            {
-              'parts': [
-                {'text': prompt},
-              ],
-            },
-          ],
-          'generationConfig': {
-            // Low temperature → more deterministic, fact-checking-style answers.
-            'temperature': 0.2,
-            'responseMimeType': 'application/json',
-          },
-        },
-      );
 
-      // Gemini's REST shape: candidates[0].content.parts[0].text holds the JSON.
-      final data = response.data as Map<String, dynamic>;
-      final candidates = data['candidates'] as List?;
-      final raw = (candidates != null && candidates.isNotEmpty)
-          ? ((candidates.first['content']?['parts'] as List?)?.first?['text']
-                    as String?)
-                ?.trim()
-          : null;
-      if (raw == null || raw.isEmpty) return null;
-
-      final jsonStr = _extractJson(raw);
-      if (jsonStr == null) return null;
-
-      final map = jsonDecode(jsonStr) as Map<String, dynamic>;
-      debugPrint('🔎 GEMINI verdict: $map');
-      return GeminiVerification.fromJson(map, modelSaysViolent: modelSaysViolent);
-    } catch (e) {
-      // Best-effort: any failure just means "no second opinion available".
-      // TEMP: surface WHY Gemini fell back (Connection refused / key / parse)
-      // so we can tell a network problem from a code problem.
-      debugPrint('⚠️ GEMINI verification failed: $e');
-      return null;
+    // Rotate over (key × model). When a key hits its free-tier quota (429) on
+    // a model, move to the next model on the same key; once all models on a key
+    // are exhausted, move to the NEXT KEY. This keeps verification working as
+    // long as any key still has quota left.
+    for (final key in GeminiConfig.keys) {
+      for (final model in _models) {
+        try {
+          final raw = await _callModel(key, model, prompt);
+          if (raw == null || raw.isEmpty) continue; // bad shape → next model
+          final jsonStr = _extractJson(raw);
+          if (jsonStr == null) continue;
+          final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+          debugPrint('🔎 GEMINI verdict ($model): $map');
+          return GeminiVerification.fromJson(
+            map,
+            modelSaysViolent: modelSaysViolent,
+          );
+        } on DioException catch (e) {
+          final status = e.response?.statusCode;
+          // 429 = this key's quota for this model is spent; try next model,
+          // then next key. Other HTTP errors: also just move on.
+          debugPrint('⚠️ GEMINI ${_mask(key)}/$model failed (HTTP $status)');
+          continue;
+        } catch (e) {
+          debugPrint('⚠️ GEMINI ${_mask(key)}/$model failed: $e');
+          continue;
+        }
+      }
     }
+    debugPrint('⚠️ GEMINI: all keys/models exhausted, no verdict');
+    return null;
+  }
+
+  /// Masks a key for logging (shows only the last 4 chars).
+  String _mask(String key) =>
+      key.length <= 4 ? '****' : '…${key.substring(key.length - 4)}';
+
+  /// One POST to a specific model with a specific key. Returns the model's raw
+  /// text reply (the JSON string we asked for), or null on unexpected shape.
+  Future<String?> _callModel(String key, String model, String prompt) async {
+    final response = await _dio.post(
+      _endpointFor(model),
+      queryParameters: {'key': key},
+      options: Options(
+        headers: {'Content-Type': 'application/json'},
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 30),
+      ),
+      data: {
+        'contents': [
+          {
+            'parts': [
+              {'text': prompt},
+            ],
+          },
+        ],
+        'generationConfig': {
+          // Low temperature → more deterministic, fact-checking-style answers.
+          'temperature': 0.2,
+          'responseMimeType': 'application/json',
+        },
+      },
+    );
+
+    // Gemini's REST shape: candidates[0].content.parts[0].text holds the JSON.
+    final data = response.data as Map<String, dynamic>;
+    final candidates = data['candidates'] as List?;
+    return (candidates != null && candidates.isNotEmpty)
+        ? ((candidates.first['content']?['parts'] as List?)?.first?['text']
+                  as String?)
+              ?.trim()
+        : null;
   }
 
   /// Gemini usually returns clean JSON (we request it), but it can wrap the

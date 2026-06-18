@@ -25,17 +25,12 @@ class TextDetectionResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The primary sentiment model is currently broken, so Gemini IS the
-    // classifier: whenever a verification exists, the whole screen (verdict,
-    // summary, bullets) reflects Gemini's verdict. We fall back to the model's
-    // [isViolent] only when Gemini is disabled or its call failed.
+    // Use the authoritative final verdict computed by the cubit (Gemini's when
+    // it ran, else the keyword fallback) — never the broken primary model.
     final state = context.watch<TextPredictionCubit>().state;
-    final verification = state is TextPredictionLoaded
-        ? state.verification
-        : null;
-    final effectiveIsViolent = verification != null
-        ? verification.effectiveVerdict
-        : isViolent;
+    final loaded = state is TextPredictionLoaded ? state : null;
+    final effectiveIsViolent = loaded?.finalIsViolent ?? isViolent;
+    final effectiveWords = loaded?.finalViolentWords ?? highlightedWords;
 
     return Scaffold(
       backgroundColor: AppColors.bg(context),
@@ -114,7 +109,8 @@ class TextDetectionResultScreen extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 10.h),
-                  _buildHighlightedText(context, effectiveIsViolent),
+                  _buildHighlightedText(
+                      context, effectiveIsViolent, effectiveWords),
                 ],
               ),
             ),
@@ -287,25 +283,11 @@ class TextDetectionResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightedText(BuildContext context, bool isViolent) {
-    final effectiveHighlightedWords =
-        highlightedWords ??
-        (isViolent
-            ? [
-                'kill',
-                'crush',
-                'destroy',
-                'threat',
-                'attack',
-                'hurt',
-                'enemies',
-                'revenge',
-                'regret',
-                'pay',
-                'watch your back',
-                "don't last long",
-              ]
-            : []);
+  Widget _buildHighlightedText(
+      BuildContext context, bool isViolent, List<String>? flagged) {
+    // Highlight exactly the words the classifier (Gemini or keyword fallback)
+    // flagged. No hardcoded fallback list — if there are no words, no highlight.
+    final effectiveHighlightedWords = flagged ?? const <String>[];
 
     if (effectiveHighlightedWords.isEmpty) {
       return Text(
@@ -319,6 +301,14 @@ class TextDetectionResultScreen extends StatelessWidget {
       );
     }
 
+    // Flagged entries can be multi-word phrases ("kill you"); break them into
+    // individual word-tokens so per-word highlighting matches each part.
+    final flaggedTokens = effectiveHighlightedWords
+        .expand((p) => p.toLowerCase().split(RegExp(r'\s+')))
+        .map((t) => t.replaceAll(RegExp(r'[^\w]'), ''))
+        .where((t) => t.isNotEmpty)
+        .toSet();
+
     final words = analyzedText.split(' ');
     return RichText(
       text: TextSpan(
@@ -331,12 +321,11 @@ class TextDetectionResultScreen extends StatelessWidget {
         children: [
           const TextSpan(text: '"'),
           ...words.map((word) {
-            final cleanWord = word
-                .replaceAll(RegExp(r'[^\w]'), '')
-                .toLowerCase();
-            final isHighlighted = effectiveHighlightedWords.any(
-              (hw) => cleanWord.contains(hw.toLowerCase()),
-            );
+            final cleanWord =
+                word.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
+            // Highlight when this word exactly matches a flagged token.
+            final isHighlighted =
+                cleanWord.isNotEmpty && flaggedTokens.contains(cleanWord);
             return TextSpan(
               text: '$word ',
               style: isHighlighted
