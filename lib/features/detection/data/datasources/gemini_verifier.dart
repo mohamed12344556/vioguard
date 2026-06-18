@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/gemini_config.dart';
 import '../models/gemini_verification.dart';
@@ -8,27 +9,22 @@ import '../models/gemini_verification.dart';
 /// Asks Google Gemini to act as a "second opinion" on the primary AI model's
 /// violence classification, for both text and video results.
 ///
+/// Talks to Gemini over its plain HTTPS REST endpoint via Dio rather than the
+/// `google_generative_ai` package: that package uses gRPC, which fails with
+/// "Connection refused" on some Android emulators. The REST call works there.
+///
 /// This is a best-effort verification layer: if Gemini is disabled (no key),
 /// errors out, or returns an unparseable reply, callers get `null` and should
 /// simply not show the second-opinion card.
 class GeminiVerifier {
-  GenerativeModel? _model;
+  final Dio _dio = Dio();
 
-  GeminiVerifier() {
-    if (GeminiConfig.isEnabled) {
-      _model = GenerativeModel(
-        model: GeminiConfig.modelName,
-        apiKey: GeminiConfig.apiKey,
-        generationConfig: GenerationConfig(
-          // Low temperature → more deterministic, fact-checking-style answers.
-          temperature: 0.2,
-          responseMimeType: 'application/json',
-        ),
-      );
-    }
-  }
+  /// REST endpoint for the configured model: `…/models/<model>:generateContent`.
+  String get _endpoint =>
+      'https://generativelanguage.googleapis.com/v1beta/models/'
+      '${GeminiConfig.modelName}:generateContent';
 
-  bool get isEnabled => _model != null;
+  bool get isEnabled => GeminiConfig.isEnabled;
 
   /// Verifies a TEXT classification. [text] is the analyzed content,
   /// [modelSaysViolent] is the primary model's verdict.
@@ -46,7 +42,8 @@ intent. Be objective. Then reply ONLY with a JSON object of this exact shape:
 {
   "is_violent": <true|false>,
   "confidence": <number between 0 and 1>,
-  "reason": "<one or two short sentences explaining your verdict in the user's language>"
+  "reason": "<one or two short sentences explaining your verdict in the user's language>",
+  "violent_words": [<the exact words or short phrases from the TEXT that signal violence/threats/aggression; copy them verbatim as they appear in the TEXT, in any language; empty array if none>]
 }
 
 TEXT TO REVIEW:
@@ -93,20 +90,53 @@ exact shape:
     String prompt, {
     required bool modelSaysViolent,
   }) async {
-    final model = _model;
-    if (model == null) return null;
+    if (!isEnabled) return null;
     try {
-      final response = await model.generateContent([Content.text(prompt)]);
-      final raw = response.text?.trim();
+      final response = await _dio.post(
+        _endpoint,
+        queryParameters: {'key': GeminiConfig.apiKey},
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+        data: {
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt},
+              ],
+            },
+          ],
+          'generationConfig': {
+            // Low temperature → more deterministic, fact-checking-style answers.
+            'temperature': 0.2,
+            'responseMimeType': 'application/json',
+          },
+        },
+      );
+
+      // Gemini's REST shape: candidates[0].content.parts[0].text holds the JSON.
+      final data = response.data as Map<String, dynamic>;
+      final candidates = data['candidates'] as List?;
+      final raw = (candidates != null && candidates.isNotEmpty)
+          ? ((candidates.first['content']?['parts'] as List?)?.first?['text']
+                    as String?)
+                ?.trim()
+          : null;
       if (raw == null || raw.isEmpty) return null;
 
       final jsonStr = _extractJson(raw);
       if (jsonStr == null) return null;
 
       final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+      debugPrint('🔎 GEMINI verdict: $map');
       return GeminiVerification.fromJson(map, modelSaysViolent: modelSaysViolent);
-    } catch (_) {
+    } catch (e) {
       // Best-effort: any failure just means "no second opinion available".
+      // TEMP: surface WHY Gemini fell back (Connection refused / key / parse)
+      // so we can tell a network problem from a code problem.
+      debugPrint('⚠️ GEMINI verification failed: $e');
       return null;
     }
   }

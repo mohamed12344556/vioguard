@@ -25,14 +25,16 @@ class TextDetectionResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // When Gemini confidently disagrees, it overrides the primary model and the
-    // whole screen (verdict, summary, bullets) reflects Gemini's verdict.
+    // The primary sentiment model is currently broken, so Gemini IS the
+    // classifier: whenever a verification exists, the whole screen (verdict,
+    // summary, bullets) reflects Gemini's verdict. We fall back to the model's
+    // [isViolent] only when Gemini is disabled or its call failed.
     final state = context.watch<TextPredictionCubit>().state;
     final verification = state is TextPredictionLoaded
         ? state.verification
         : null;
-    final effectiveIsViolent = verification?.overridesModel == true
-        ? verification!.geminiSaysViolent
+    final effectiveIsViolent = verification != null
+        ? verification.effectiveVerdict
         : isViolent;
 
     return Scaffold(

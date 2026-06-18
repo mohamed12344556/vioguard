@@ -307,7 +307,8 @@ class _DetailsContent extends StatelessWidget {
           ),
           SizedBox(height: 20.h),
 
-          // ANALYZED CONTENT (the text the user actually typed/analyzed)
+          // ANALYZED CONTENT (the text the user actually typed/analyzed), with
+          // the flagged violent words highlighted just like the result screen.
           if (!isVideo && details.extractedTextContext.trim().isNotEmpty) ...[
             _SectionLabel(label: 'ANALYZED CONTENT'),
             SizedBox(height: 10.h),
@@ -319,13 +320,61 @@ class _DetailsContent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: AppColors.borderColor(context)),
               ),
-              child: Text(
+              child: _highlightedText(
+                context,
                 details.extractedTextContext,
-                style: TextStyle(
-                  color: AppColors.textPrimaryColor(context),
-                  fontSize: 14.sp,
-                  height: 1.5,
-                ),
+                details.violentWords,
+              ),
+            ),
+            SizedBox(height: 20.h),
+          ],
+
+          // VIOLENCE SCORE (video records carry a percentage worth showing).
+          if (isVideo && details.violentPercent > 0) ...[
+            _SectionLabel(label: 'VIOLENCE SCORE'),
+            SizedBox(height: 10.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceColor(context),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.borderColor(context)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Violence',
+                        style: TextStyle(
+                          color: AppColors.textSecondaryColor(context),
+                          fontSize: 13.sp,
+                        ),
+                      ),
+                      Text(
+                        '${details.violentPercent.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8.h),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6.r),
+                    child: LinearProgressIndicator(
+                      value: (details.violentPercent / 100).clamp(0.0, 1.0),
+                      minHeight: 8.h,
+                      backgroundColor: AppColors.borderColor(context),
+                      valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 20.h),
@@ -457,6 +506,53 @@ class _DetailsContent extends StatelessWidget {
           // ),
           // SizedBox(height: 20.h),
         ],
+      ),
+    );
+  }
+
+  /// Renders [text] with any [words] highlighted in red, mirroring the result
+  /// screen's highlighting. Falls back to a plain paragraph when there are no
+  /// words to highlight (e.g. a non-violent record).
+  Widget _highlightedText(
+    BuildContext context,
+    String text,
+    List<String> words,
+  ) {
+    final baseStyle = TextStyle(
+      color: AppColors.textPrimaryColor(context),
+      fontSize: 14.sp,
+      height: 1.5,
+    );
+
+    final flagged = words
+        .map((w) => w.trim().toLowerCase())
+        .where((w) => w.isNotEmpty)
+        .toSet();
+
+    if (flagged.isEmpty) {
+      return Text(text, style: baseStyle);
+    }
+
+    // Split on whitespace but keep it, so the rebuilt text preserves spacing.
+    final tokens = text.split(RegExp(r'(\s+)'));
+    return RichText(
+      text: TextSpan(
+        style: baseStyle,
+        children: tokens.map((token) {
+          final clean = token.replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
+          final isHit = clean.isNotEmpty &&
+              flagged.any((w) => w.contains(clean) || clean.contains(w));
+          return TextSpan(
+            text: '$token ',
+            style: isHit
+                ? TextStyle(
+                    backgroundColor: AppColors.error.withValues(alpha: 0.15),
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w600,
+                  )
+                : null,
+          );
+        }).toList(),
       ),
     );
   }

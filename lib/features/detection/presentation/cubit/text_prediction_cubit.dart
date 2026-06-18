@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/api/token_storage.dart';
@@ -67,12 +68,26 @@ class TextPredictionCubit extends Cubit<TextPredictionState> {
       // While it runs the UI is still in Loading — both reads as "analyzing".
       final verification = await _verify(text, response.isViolent);
 
-      // The verdict shown and saved: Gemini's when it confidently overrides.
-      final finalIsViolent = verification?.overridesModel == true
-          ? verification!.geminiSaysViolent
+      // The verdict shown and saved. The primary sentiment model is currently
+      // broken (returns the same label for everything), so Gemini IS the
+      // classifier: whenever it returned a verdict, that wins. We fall back to
+      // the model only when Gemini is disabled or its call failed.
+      final finalIsViolent = verification != null
+          ? verification.effectiveVerdict
           : response.isViolent;
       // Backend expects "0" => violent, "1" => non-violent.
       final finalResult = finalIsViolent ? '0' : '1';
+
+      // The flagged words to persist (and highlight later). Only meaningful when
+      // the final verdict is violent; Gemini supplies them.
+      final flaggedWords = finalIsViolent
+          ? (verification?.violentWords ?? const [])
+          : const <String>[];
+
+      // TEMP: trace whether Gemini ran and what words we're about to persist.
+      debugPrint('💾 SAVE text: violent=$finalIsViolent, '
+          'gemini=${verification != null ? "ran" : "NULL"}, '
+          'words=$flaggedWords');
 
       // Persist the FINAL (corrected) verdict to the backend history.
       final email = tokenStorage.getUserEmail();
@@ -82,6 +97,7 @@ class TextPredictionCubit extends Cubit<TextPredictionState> {
           result: finalResult,
           userEmail: email,
           url: url,
+          violentWords: flaggedWords,
         );
       }
 

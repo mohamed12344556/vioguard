@@ -121,6 +121,8 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                   analyzedText: analyzedText,
                   cleanedText: state.response.cleanedText,
                   isViolent: state.response.isViolent,
+                  // Highlight the exact words Gemini flagged (when it ran).
+                  highlightedWords: state.verification?.violentWords,
                 ),
               ),
             ),

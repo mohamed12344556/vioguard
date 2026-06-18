@@ -9,6 +9,13 @@ class HistoryDetailsModel {
   final String currentStatus;
   final String confidenceText;
   final String extractedTextContext;
+
+  /// Words/phrases to highlight in [extractedTextContext] (violent text records).
+  final List<String> violentWords;
+
+  /// Violence percentage for video records (0–100); 0 for non-video.
+  final double violentPercent;
+
   final List<String> analysisSummary;
 
   const HistoryDetailsModel({
@@ -20,6 +27,8 @@ class HistoryDetailsModel {
     required this.currentStatus,
     required this.confidenceText,
     required this.extractedTextContext,
+    required this.violentWords,
+    required this.violentPercent,
     required this.analysisSummary,
   });
 
@@ -42,6 +51,12 @@ class HistoryDetailsModel {
       currentStatus: json['currentStatus'] as String? ?? '',
       confidenceText: json['confidenceText'] as String? ?? '',
       extractedTextContext: json['extractedTextContext'] as String? ?? '',
+      violentWords: (json['violentWords'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .where((e) => e.trim().isNotEmpty)
+              .toList() ??
+          const [],
+      violentPercent: (json['violentPercent'] as num?)?.toDouble() ?? 0.0,
       analysisSummary: (json['analysisSummary'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??

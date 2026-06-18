@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../core/routes/routes.dart';
 import '../../../core/theme/colors.dart';
 import '../data/models/video_prediction_response.dart';
 import '../presentation/cubit/video_prediction_cubit.dart';
@@ -202,9 +203,14 @@ class VideoDetectionResultScreen extends StatelessWidget {
               height: 52.h,
               child: ElevatedButton(
                 onPressed: () {
-                  // Return to the Home/dashboard (the first route) rather than
-                  // opening a separate detection screen.
-                  Navigator.popUntil(context, (route) => route.isFirst);
+                  // Return to the Home/dashboard. Using a named route guarantees
+                  // we land on a defined route instead of the implicit first
+                  // entry (which can be the undefined '/' route on web).
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    Routes.home,
+                    (route) => false,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
