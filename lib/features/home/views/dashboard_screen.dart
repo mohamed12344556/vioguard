@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 
 import '../../../core/api/token_storage.dart';
 import '../../../core/di/injection_container.dart';
@@ -217,8 +218,23 @@ class _HomeContent extends StatefulWidget {
   State<_HomeContent> createState() => _HomeContentState();
 }
 
+/// Max characters allowed in the analysis input.
+const int _kMaxTextLength = 1500;
+
 class _HomeContentState extends State<_HomeContent> {
   final TextEditingController _inputController = TextEditingController();
+
+  /// On-device language identifier used to gate the input to English only.
+  final LanguageIdentifier _languageIdentifier =
+      LanguageIdentifier(confidenceThreshold: 0.5);
+
+  /// True when the current input is detected as Arabic. While true the Detect
+  /// button is disabled (the model is English-only).
+  bool _isArabic = false;
+
+  /// Guards against overlapping async language-ID calls so a slower earlier
+  /// result can't overwrite a newer one.
+  int _detectSeq = 0;
 
   /// Cached so dispose() can reset the cubits without an unsafe context lookup
   /// on a deactivated widget.
@@ -247,12 +263,43 @@ class _HomeContentState extends State<_HomeContent> {
     _textCubit = context.read<TextPredictionCubit>();
   }
 
-  void _onInputChanged() => setState(() {});
+  void _onInputChanged() {
+    // Repaint for the enabled/disabled + clear-button states.
+    setState(() {});
+    // Identify the language so the button can block Arabic input.
+    _detectLanguage(_inputController.text);
+  }
+
+  /// Identifies the input language and flips [_isArabic] so the button
+  /// enables/disables. URLs and empty input are never treated as Arabic.
+  Future<void> _detectLanguage(String value) async {
+    final text = value.trim();
+    final seq = ++_detectSeq;
+
+    if (text.isEmpty || _urlPattern.hasMatch(text)) {
+      if (_isArabic) setState(() => _isArabic = false);
+      return;
+    }
+
+    try {
+      final code = await _languageIdentifier.identifyLanguage(text);
+      // A newer keystroke superseded this lookup — drop the stale result.
+      if (seq != _detectSeq || !mounted) return;
+      final isArabic = code == 'ar';
+      if (isArabic != _isArabic) setState(() => _isArabic = isArabic);
+    } catch (_) {
+      // 'und' (undetermined) or any error: don't block the user.
+      if (seq == _detectSeq && mounted && _isArabic) {
+        setState(() => _isArabic = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
     _inputController.removeListener(_onInputChanged);
     _inputController.dispose();
+    _languageIdentifier.close();
     _videoCubit.reset();
     _textCubit.reset();
     super.dispose();
@@ -272,7 +319,7 @@ class _HomeContentState extends State<_HomeContent> {
   /// goes straight to the text model. The AI decides the content type for us.
   void _detectViolence() {
     final input = _inputController.text.trim();
-    if (input.isEmpty) return;
+    if (input.isEmpty || _isArabic) return;
 
     if (_isUrl) {
       _lastSourceUrl = input;
@@ -287,7 +334,8 @@ class _HomeContentState extends State<_HomeContent> {
     }
   }
 
-  bool get _canDetect => _inputController.text.trim().isNotEmpty;
+  bool get _canDetect =>
+      _inputController.text.trim().isNotEmpty && !_isArabic;
 
   @override
   Widget build(BuildContext context) {
@@ -416,6 +464,10 @@ class _HomeContentState extends State<_HomeContent> {
                 controller: _inputController,
                 minLines: 1,
                 maxLines: 5,
+                maxLength: _kMaxTextLength,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(_kMaxTextLength),
+                ],
                 keyboardType: TextInputType.multiline,
                 textInputAction: TextInputAction.newline,
                 style: TextStyle(
@@ -423,6 +475,7 @@ class _HomeContentState extends State<_HomeContent> {
                   fontSize: 15.sp,
                 ),
                 decoration: InputDecoration(
+                  counterText: '',
                   hintText: 'Paste URL here Or type text...',
                   hintStyle: TextStyle(
                     color: AppColors.textLight,
@@ -457,18 +510,45 @@ class _HomeContentState extends State<_HomeContent> {
                 ),
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 8.h),
+            // Character counter (n/1500).
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _inputController,
+              builder: (context, value, _) {
+                return Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '${value.text.characters.length}/$_kMaxTextLength',
+                    style: TextStyle(
+                      color: AppColors.textSecondaryColor(context),
+                      fontSize: 11.sp,
+                    ),
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 8.h),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, color: AppColors.primary, size: 16.sp),
+                Icon(
+                  _isArabic ? Icons.error_outline : Icons.info_outline,
+                  color: _isArabic ? AppColors.error : AppColors.primary,
+                  size: 16.sp,
+                ),
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    'Our AI will automatically detect whether the content is '
-                    'text or video and scan for safety violations.',
+                    _isArabic
+                        ? 'Arabic is not supported. Please enter English '
+                            'text only.'
+                        : 'Our AI will automatically detect whether the '
+                            'content is text or video and scan for safety '
+                            'violations.',
                     style: TextStyle(
-                      color: AppColors.textSecondaryColor(context),
+                      color: _isArabic
+                          ? AppColors.error
+                          : AppColors.textSecondaryColor(context),
                       fontSize: 12.sp,
                       height: 1.4,
                     ),
@@ -489,7 +569,8 @@ class _HomeContentState extends State<_HomeContent> {
                 return ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _inputController,
                   builder: (context, value, _) {
-                    final canDetect = value.text.trim().isNotEmpty;
+                    final canDetect =
+                        value.text.trim().isNotEmpty && !_isArabic;
                     return SizedBox(
                       width: double.infinity,
                       height: 52.h,

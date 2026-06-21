@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_mlkit_language_id/google_mlkit_language_id.dart';
 import '../../../core/theme/colors.dart';
 import '../presentation/cubit/text_prediction_cubit.dart';
 import '../presentation/cubit/video_prediction_cubit.dart';
@@ -14,8 +16,23 @@ class TextDetectionScreen extends StatefulWidget {
   State<TextDetectionScreen> createState() => _TextDetectionScreenState();
 }
 
+/// Max characters allowed in the analysis input.
+const int _kMaxTextLength = 1500;
+
 class _TextDetectionScreenState extends State<TextDetectionScreen> {
   final TextEditingController _textController = TextEditingController();
+
+  /// On-device language identifier used to gate the input to English only.
+  final LanguageIdentifier _languageIdentifier =
+      LanguageIdentifier(confidenceThreshold: 0.5);
+
+  /// True when the current input is detected as Arabic. While true the Detect
+  /// button is disabled (the model is English-only).
+  bool _isArabic = false;
+
+  /// Guards against overlapping async language-ID calls so a slower earlier
+  /// result can't overwrite a newer one.
+  int _detectSeq = 0;
 
   /// Cached so dispose() can reset the cubits without an unsafe context lookup
   /// on a deactivated widget.
@@ -34,7 +51,33 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
     _cubit.reset();
     _videoCubit.reset();
     _textController.dispose();
+    _languageIdentifier.close();
     super.dispose();
+  }
+
+  /// Identifies the input language on every change and flips [_isArabic] so the
+  /// button enables/disables. URLs and empty input are never treated as Arabic.
+  Future<void> _onTextChanged(String value) async {
+    final text = value.trim();
+    final seq = ++_detectSeq;
+
+    if (text.isEmpty || _looksLikeUrl(text)) {
+      if (_isArabic) setState(() => _isArabic = false);
+      return;
+    }
+
+    try {
+      final code = await _languageIdentifier.identifyLanguage(text);
+      // A newer keystroke superseded this lookup — drop the stale result.
+      if (seq != _detectSeq || !mounted) return;
+      final isArabic = code == 'ar';
+      if (isArabic != _isArabic) setState(() => _isArabic = isArabic);
+    } catch (_) {
+      // 'und' (undetermined) or any error: don't block the user.
+      if (seq == _detectSeq && mounted && _isArabic) {
+        setState(() => _isArabic = false);
+      }
+    }
   }
 
   /// Treats the input as a URL when it starts with http(s); otherwise as
@@ -57,7 +100,7 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
 
   void _detectViolence() {
     final input = _textController.text.trim();
-    if (input.isEmpty) return;
+    if (input.isEmpty || _isArabic) return;
 
     if (_looksLikeUrl(input)) {
       // Route video links to the video pipeline; everything else stays text.
@@ -201,6 +244,11 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                   TextField(
                     controller: _textController,
                     maxLines: 8,
+                    maxLength: _kMaxTextLength,
+                    onChanged: _onTextChanged,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(_kMaxTextLength),
+                    ],
                     decoration: InputDecoration(
                       hintText: 'Enter text or paste a link (http://...)',
                       hintStyle: TextStyle(
@@ -231,20 +279,26 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
               ),
             ),
             SizedBox(height: 16.h),
-            // Supported Languages Info
+            // Supported Languages Info / Arabic warning
             Row(
               children: [
                 Icon(
-                  Icons.info_outline,
-                  color: AppColors.primary,
+                  _isArabic ? Icons.error_outline : Icons.info_outline,
+                  color: _isArabic ? AppColors.error : AppColors.primary,
                   size: 16.sp,
                 ),
                 SizedBox(width: 8.w),
-                Text(
-                  'Supported languages: English',
-                  style: TextStyle(
-                    color: AppColors.textSecondaryColor(context),
-                    fontSize: 13.sp,
+                Expanded(
+                  child: Text(
+                    _isArabic
+                        ? 'Arabic is not supported. Please enter English text only.'
+                        : 'Supported languages: English',
+                    style: TextStyle(
+                      color: _isArabic
+                          ? AppColors.error
+                          : AppColors.textSecondaryColor(context),
+                      fontSize: 13.sp,
+                    ),
                   ),
                 ),
               ],
@@ -260,11 +314,13 @@ class _TextDetectionScreenState extends State<TextDetectionScreen> {
                     .state is VideoPredictionLoading;
                 final isLoading =
                     state is TextPredictionLoading || videoLoading;
+                // English-only: block while Arabic is detected.
+                final disabled = isLoading || _isArabic;
                 return SizedBox(
                   width: double.infinity,
                   height: 52.h,
                   child: ElevatedButton(
-                    onPressed: isLoading ? null : _detectViolence,
+                    onPressed: disabled ? null : _detectViolence,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       disabledBackgroundColor:
